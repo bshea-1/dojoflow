@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -13,6 +14,7 @@ import {
   RadialBar,
   PolarAngleAxis
 } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
 
@@ -179,9 +181,18 @@ export function DashboardStats({ stats, userName, showLtv = false }: DashboardSt
     style: 'currency',
     currency: 'USD',
   });
+  const statsKey = useMemo(() => JSON.stringify(stats), [stats]);
 
   return (
-    <div className="space-y-6 bg-slate-50/50 p-2 rounded-xl">
+    <AnimatePresence mode="wait">
+    <motion.div
+      key={statsKey}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="space-y-6 bg-slate-50/50 p-2 rounded-xl"
+    >
       <div className="bg-white border rounded-2xl shadow-sm p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -389,6 +400,7 @@ export function DashboardStats({ stats, userName, showLtv = false }: DashboardSt
 
       </div>
 
-    </div>
+    </motion.div>
+    </AnimatePresence>
   );
 }
