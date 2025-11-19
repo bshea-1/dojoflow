@@ -13,7 +13,6 @@ import {
   RadialBar,
   PolarAngleAxis
 } from "recharts";
-import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
 
@@ -62,7 +61,6 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
 interface DashboardStatsProps {
   userName?: string;
   showLtv?: boolean;
-  transitionKey?: string;
   stats: {
     totalLifetimeValue: number;
     quickStats: {
@@ -176,23 +174,14 @@ function SemiCircleGauge({
   );
 }
 
-export function DashboardStats({ stats, userName, showLtv = false, transitionKey }: DashboardStatsProps) {
+export function DashboardStats({ stats, userName, showLtv = false }: DashboardStatsProps) {
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   });
-  const statsKey = transitionKey ?? "default";
 
   return (
-    <AnimatePresence mode="wait">
-    <motion.div
-      key={statsKey}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="space-y-6 bg-slate-50/50 p-2 rounded-xl"
-    >
+    <div className="space-y-6 bg-slate-50/50 p-2 rounded-xl">
       <div className="bg-white border rounded-2xl shadow-sm p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -400,7 +389,5 @@ export function DashboardStats({ stats, userName, showLtv = false, transitionKey
 
       </div>
 
-    </motion.div>
-    </AnimatePresence>
   );
 }

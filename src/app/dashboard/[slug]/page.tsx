@@ -188,12 +188,7 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   return (
     <div className="space-y-6">
-      <DashboardStats
-        stats={stats}
-        userName={franchise.name}
-        showLtv={showLtv}
-        transitionKey={franchise.id}
-      />
+      <DashboardStats stats={stats} userName={franchise.name} showLtv={showLtv} />
     </div>
   );
 }
