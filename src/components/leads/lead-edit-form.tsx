@@ -152,7 +152,12 @@ export function LeadEditForm({
           <div>
             <Label htmlFor="studentProgram">Program Interest</Label>
             <Select
-              onValueChange={(val) => form.setValue("studentProgram", val)}
+              onValueChange={(val) =>
+                form.setValue(
+                  "studentProgram",
+                  val as EditLeadSchema["studentProgram"]
+                )
+              }
               value={form.watch("studentProgram")}
             >
               <SelectTrigger id="studentProgram">
