@@ -15,7 +15,7 @@ export default async function MembersPage({ params }: { params: { slug: string }
       </div>
       
       <div className="flex-1 overflow-y-auto pb-10">
-        <MembersList initialMembers={members} />
+        <MembersList initialMembers={members} franchiseSlug={params.slug} />
       </div>
     </div>
   );

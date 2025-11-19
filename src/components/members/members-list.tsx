@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -28,39 +28,49 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Member {
-  id: string;
-  guardian_name: string;
-  student_name: string;
-  program: string;
-  status: string;
-  email: string;
-  phone: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { LeadEditForm } from "@/components/leads/lead-edit-form";
+import { EditLeadSchema } from "@/lib/schemas/edit-lead";
+import type { Member as MemberType } from "@/app/dashboard/[slug]/members/actions";
 
 interface MembersListProps {
-  initialMembers: Member[];
+  initialMembers: MemberType[];
+  franchiseSlug: string;
 }
 
 const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
 
-export function MembersList({ initialMembers }: MembersListProps) {
+const formatStatus = (status?: string | null) =>
+  status ? status.replace(/_/g, " ") : "Active";
+
+export function MembersList({ initialMembers, franchiseSlug }: MembersListProps) {
+  const [members, setMembers] = useState(initialMembers);
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [programFilters, setProgramFilters] = useState<string[]>([]);
+  const [editingMember, setEditingMember] = useState<MemberType | null>(null);
 
   const filteredMembers = useMemo(() => {
-    return initialMembers.filter((member) => {
+    return members.filter((member) => {
+      const memberProgram = member.program || "";
       const matchesSearch =
-        member.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.guardian_name.toLowerCase().includes(searchQuery.toLowerCase());
+        member.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${member.guardianFirstName} ${member.guardianLastName}`.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesProgram =
-        programFilters.length === 0 || programFilters.includes(member.program);
+        programFilters.length === 0 || programFilters.includes(memberProgram);
 
       return matchesSearch && matchesProgram;
     });
-  }, [initialMembers, searchQuery, programFilters]);
+  }, [members, searchQuery, programFilters]);
 
   const toggleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -89,6 +99,28 @@ export function MembersList({ initialMembers }: MembersListProps) {
     action: "email" | "sms"
   ) => {
     toast.success(`Mock: Sending ${action} to ${memberName}.`);
+  };
+
+  const handleEditSaved = (values: EditLeadSchema) => {
+    if (!editingMember) return;
+    setMembers((prev) =>
+      prev.map((member) =>
+        member.id === editingMember.id
+          ? {
+              ...member,
+              guardianFirstName: values.guardianFirstName,
+              guardianLastName: values.guardianLastName,
+              email: values.guardianEmail,
+              phone: values.guardianPhone,
+              studentName: values.studentFirstName,
+              program: values.studentProgram,
+              source: values.source,
+              notes: values.notes,
+            }
+          : member
+      )
+    );
+    setEditingMember(null);
   };
 
   return (
@@ -188,12 +220,14 @@ export function MembersList({ initialMembers }: MembersListProps) {
                     onChange={() => toggleSelectMember(member.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{member.guardian_name}</TableCell>
-                <TableCell>{member.student_name}</TableCell>
-                <TableCell className="capitalize">{member.program}</TableCell>
+                <TableCell className="font-medium">
+                  {member.guardianFirstName} {member.guardianLastName}
+                </TableCell>
+                <TableCell>{member.studentName}</TableCell>
+                <TableCell className="capitalize">{member.program || "N/A"}</TableCell>
                 <TableCell>
-                  <Badge variant={member.status === "Active" ? "default" : "outline"}>
-                    {member.status}
+                  <Badge variant={member.status === "enrolled" ? "default" : "outline"}>
+                    {formatStatus(member.status)}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -201,7 +235,7 @@ export function MembersList({ initialMembers }: MembersListProps) {
                   <div className="text-xs text-muted-foreground">{member.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
+                    <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
@@ -210,15 +244,18 @@ export function MembersList({ initialMembers }: MembersListProps) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                       <DropdownMenuItem
-                        onClick={() => handleIndividualAction(member.guardian_name, "email")}
+                        onClick={() => handleIndividualAction(`${member.guardianFirstName} ${member.guardianLastName}`, "email")}
                       >
                         Email Guardian
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleIndividualAction(member.guardian_name, "sms")}
+                        onClick={() => handleIndividualAction(`${member.guardianFirstName} ${member.guardianLastName}`, "sms")}
                       >
                         SMS Guardian
                       </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditingMember(member)}>
+                          Edit Details
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -237,6 +274,34 @@ export function MembersList({ initialMembers }: MembersListProps) {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Edit Member Details</DialogTitle>
+            <DialogDescription>Update guardian and student information.</DialogDescription>
+          </DialogHeader>
+          {editingMember && (
+            <LeadEditForm
+              franchiseSlug={franchiseSlug}
+              leadId={editingMember.leadId}
+              guardianId={editingMember.guardianId}
+              studentId={editingMember.studentId}
+              initialValues={{
+                guardianFirstName: editingMember.guardianFirstName || "",
+                guardianLastName: editingMember.guardianLastName || "",
+                guardianEmail: editingMember.email || "",
+                guardianPhone: editingMember.phone || "",
+                studentFirstName: editingMember.studentName || "",
+                studentProgram: editingMember.program || "jr",
+                source: editingMember.source || "",
+                notes: editingMember.notes || "",
+              }}
+              onSaved={handleEditSaved}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,8 +3,13 @@ import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 
+type StudentRow = Database["public"]["Tables"]["students"]["Row"];
+type GuardianRow = Database["public"]["Tables"]["guardians"]["Row"] & {
+  students: StudentRow[];
+};
+
 type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: Database["public"]["Tables"]["guardians"]["Row"][];
+  guardians: GuardianRow[];
 };
 
 export default async function PipelinePage({ params }: { params: { slug: string } }) {
@@ -12,7 +17,7 @@ export default async function PipelinePage({ params }: { params: { slug: string 
   
   const { data: leads } = await supabase
     .from("leads")
-    .select("*, guardians(*)");
+    .select("*, guardians(*, students(*))");
 
   return (
     <div className="h-full flex flex-col space-y-4">

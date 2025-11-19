@@ -13,7 +13,7 @@ import {
   RadialBar,
   PolarAngleAxis
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
 
 interface DashboardStatsProps {
@@ -110,23 +110,53 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
 
   return (
     <div className="space-y-6 bg-slate-50/50 p-2 rounded-xl">
-      
-      {/* Total Estimated Lifetime Value */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border">
-        <div>
-          <h2 className="text-lg font-medium text-slate-900">Total Estimated Lifetime Value</h2>
-          <p className="text-sm text-muted-foreground">of Families not yet Enrolled/Waitlisted</p>
-          <p className="text-xs text-muted-foreground mt-1 italic">Since 2026</p>
-        </div>
-        <div className="text-3xl font-bold text-green-500">
-          {currencyFormatter.format(stats.totalLifetimeValue)}
+      <div className="bg-white border rounded-2xl shadow-sm p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">Insight Dashboard</p>
+            <h1 className="text-3xl font-semibold text-slate-900">
+              Good morning, {userName || "Sensei"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+              Try to get tours completed faster at this location to improve registration rates. Keep your
+              follow-ups tight so parents sign paperwork quickly and stay ahead of the competition.
+            </p>
+          </div>
+          <div className="text-right text-sm text-muted-foreground">
+            <p className="font-medium text-slate-600">Last 7 Days</p>
+            <p className="text-xs">Updated {new Date().toLocaleDateString()}</p>
+          </div>
         </div>
       </div>
+      
+      <Card className="border-none shadow-sm bg-white">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg text-slate-900">Total Estimated Lifetime Value</CardTitle>
+            <CardDescription>Families not yet enrolled or waitlisted • Since 2026</CardDescription>
+          </div>
+          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="flex items-end justify-between">
+          <div>
+            <p className="text-4xl font-bold text-green-500">
+              {currencyFormatter.format(stats.totalLifetimeValue)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Grows $249 every month per pending family until enrollment.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Stats Row */}
-      <Card className="border-none shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-medium">Quick Stats</CardTitle>
+      <Card className="border-none shadow-sm bg-white">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base font-medium">Quick Stats</CardTitle>
+            <CardDescription>Pulse overview of tours and task follow-ups</CardDescription>
+          </div>
+          <MoreVertical className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -195,6 +225,9 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
                 <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
                 <span className="text-xs font-medium">{userName || "Franchise"}</span>
             </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Note: Families without any children in the system are assumed to have one child.
+            </p>
           </CardContent>
         </Card>
 

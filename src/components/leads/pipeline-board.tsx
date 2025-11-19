@@ -24,8 +24,12 @@ import { toast } from "sonner";
 import { LeadDetailDialog } from "./lead-detail-dialog";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
+type GuardianWithStudents = Database["public"]["Tables"]["guardians"]["Row"] & {
+  students: Database["public"]["Tables"]["students"]["Row"][];
+};
+
 type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: Database["public"]["Tables"]["guardians"]["Row"][];
+  guardians: GuardianWithStudents[];
 };
 
 const COLUMNS: { id: LeadStatus; title: string }[] = [
@@ -63,7 +67,7 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("*, guardians(*)");
+        .select("*, guardians(*, students(*))");
       
       if (error) throw error;
       return data as LeadWithGuardian[];

@@ -33,10 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -45,9 +43,15 @@ import { Database } from "@/types/supabase";
 import { getLeadTasks, updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/actions";
 import { createTask, updateTaskStatus, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
 import { deleteLead } from "@/app/dashboard/[slug]/pipeline/delete-action";
+import { LeadEditForm } from "./lead-edit-form";
+
+type StudentRow = Database["public"]["Tables"]["students"]["Row"];
+type GuardianRow = Database["public"]["Tables"]["guardians"]["Row"] & {
+  students: StudentRow[];
+};
 
 type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: Database["public"]["Tables"]["guardians"]["Row"][];
+  guardians: GuardianRow[];
 };
 
 interface LeadDetailDialogProps {
@@ -424,35 +428,32 @@ export function LeadDetailDialog({
             </TabsContent>
 
             <TabsContent value="info" className="flex-1 overflow-y-auto p-6 mt-0">
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
-                    <p className="text-sm">{guardian?.email || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Phone</h4>
-                    <p className="text-sm">{guardian?.phone || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Source</h4>
-                    <p className="text-sm">{lead.source || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Created</h4>
-                    <p className="text-sm">{format(new Date(lead.created_at), "PPP")}</p>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Notes</h4>
-                  <div className="rounded-md bg-muted p-3 text-sm">
-                    {lead.notes || "No notes available."}
-                  </div>
-                </div>
-              </div>
+              {guardian ? (
+                <LeadEditForm
+                  franchiseSlug={franchiseSlug}
+                  leadId={lead.id}
+                  guardianId={guardian.id}
+                  studentId={guardian.students?.[0]?.id}
+                  initialValues={{
+                    guardianFirstName: guardian.first_name || "",
+                    guardianLastName: guardian.last_name || "",
+                    guardianEmail: guardian.email || "",
+                    guardianPhone: guardian.phone || "",
+                    studentFirstName: guardian.students?.[0]?.first_name || "",
+                    studentProgram: guardian.students?.[0]?.program_interest || "jr",
+                    studentDob: guardian.students?.[0]?.dob
+                      ? guardian.students?.[0]?.dob.split("T")[0]
+                      : undefined,
+                    source: lead.source || "",
+                    notes: lead.notes || "",
+                  }}
+                  onSaved={() => {
+                    queryClient.invalidateQueries({ queryKey: ["leads", franchiseSlug] });
+                  }}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">No guardian information available.</p>
+              )}
             </TabsContent>
           </Tabs>
         </div>

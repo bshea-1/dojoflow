@@ -102,3 +102,80 @@ export async function getLeadTasks(leadId: string) {
   if (error) return [];
   return data;
 }
+
+type LeadEditPayload = {
+  leadId: string;
+  guardianId: string;
+  studentId?: string;
+  guardian: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  student?: {
+    firstName?: string;
+    programInterest?: string;
+    dob?: string;
+  };
+  lead?: {
+    source?: string;
+    notes?: string;
+  };
+};
+
+export async function updateLeadDetails(
+  payload: LeadEditPayload,
+  franchiseSlug: string
+) {
+  const supabase = createClient();
+
+  const updates = [];
+
+  const guardianUpdate = await supabase
+    .from("guardians")
+    .update({
+      first_name: payload.guardian.firstName,
+      last_name: payload.guardian.lastName,
+      email: payload.guardian.email,
+      phone: payload.guardian.phone,
+    })
+    .eq("id", payload.guardianId);
+
+  if (guardianUpdate.error) {
+    return { error: guardianUpdate.error.message };
+  }
+
+  if (payload.studentId && payload.student) {
+    const studentUpdate = await supabase
+      .from("students")
+      .update({
+        first_name: payload.student.firstName,
+        program_interest: payload.student.programInterest,
+        dob: payload.student.dob || null,
+      })
+      .eq("id", payload.studentId);
+
+    if (studentUpdate.error) {
+      return { error: studentUpdate.error.message };
+    }
+  }
+
+  if (payload.lead) {
+    const leadUpdate = await supabase
+      .from("leads")
+      .update({
+        source: payload.lead.source,
+        notes: payload.lead.notes,
+      })
+      .eq("id", payload.leadId);
+
+    if (leadUpdate.error) {
+      return { error: leadUpdate.error.message };
+    }
+  }
+
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidatePath(`/dashboard/${franchiseSlug}/members`);
+  return { success: true };
+}

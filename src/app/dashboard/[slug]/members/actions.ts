@@ -1,23 +1,26 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { Database } from "@/types/supabase";
 
-type Member = {
+export type Member = {
   id: string;
-  guardian_name: string;
-  student_name: string;
-  belt: string;
+  studentId: string;
+  leadId: string;
+  guardianId: string;
+  guardianFirstName: string;
+  guardianLastName: string;
+  studentName: string;
   program: string;
-  status: string; // Derived or stored? Assuming active if enrolled
+  status: string;
   email: string;
   phone: string;
+  source?: string | null;
+  notes?: string | null;
 };
 
-export async function getMembers(franchiseSlug: string) {
+export async function getMembers(franchiseSlug: string): Promise<Member[]> {
   const supabase = createClient();
 
-  // Get franchise ID
   const { data: franchise } = await supabase
     .from("franchises")
     .select("id")
@@ -26,39 +29,57 @@ export async function getMembers(franchiseSlug: string) {
 
   if (!franchise) return [];
 
-  // Fetch students with guardians
-  // We need to join students -> guardians -> leads (to check franchise_id)
-  // But RLS should handle franchise_id check if we just query students?
-  // RLS for students: USING (EXISTS (SELECT 1 FROM guardians JOIN leads ... WHERE leads.franchise_id = get_my_franchise_id()))
-  // So we can just query students directly if we are logged in.
-  
-  const { data: students, error } = await supabase
-    .from("students")
+  const { data: leads, error } = await supabase
+    .from("leads")
     .select(`
-      *,
+      id,
+      status,
+      source,
+      notes,
       guardians (
+        id,
         first_name,
         last_name,
         email,
-        phone
+        phone,
+        students (
+          id,
+          first_name,
+          program_interest
+        )
       )
-    `);
+    `)
+    .eq("franchise_id", franchise.id);
 
-  if (error) {
+  if (error || !leads) {
     console.error("Error fetching members:", error);
     return [];
   }
 
-  // Transform to Member type
-  return students.map((student) => ({
-    id: student.id,
-    guardian_name: `${student.guardians?.first_name} ${student.guardians?.last_name}`,
-    student_name: student.first_name,
-    belt: student.current_belt || "White",
-    program: student.program_interest,
-    status: "Active", // Placeholder logic
-    email: student.guardians?.email,
-    phone: student.guardians?.phone,
-  }));
+  const members: Member[] = [];
+
+  leads.forEach((lead) => {
+    lead.guardians?.forEach((guardian: any) => {
+      guardian.students?.forEach((student: any) => {
+        members.push({
+          id: student.id,
+          studentId: student.id,
+          leadId: lead.id,
+          guardianId: guardian.id,
+          guardianFirstName: guardian.first_name,
+          guardianLastName: guardian.last_name,
+          studentName: student.first_name,
+          program: student.program_interest,
+          status: lead.status || "active",
+          email: guardian.email,
+          phone: guardian.phone,
+          source: lead.source,
+          notes: lead.notes,
+        });
+      });
+    });
+  });
+
+  return members;
 }
 
