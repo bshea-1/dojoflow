@@ -78,12 +78,15 @@ function SemiCircleGauge({
             />
             <RadialBar
               dataKey="track"
+              background={{ fill: "#d7dce3" }}
               fill="#d7dce3"
+              isAnimationActive={false}
               cornerRadius={12}
             />
             <RadialBar
               dataKey="value"
               fill={displayColor}
+              isAnimationActive={false}
               cornerRadius={12}
             />
           </RadialBarChart>
@@ -111,16 +114,14 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
   return (
     <div className="space-y-6 bg-slate-50/50 p-2 rounded-xl">
       <div className="bg-white border rounded-2xl shadow-sm p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">Insight Dashboard</p>
+            <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
+              Insight Dashboard
+            </p>
             <h1 className="text-3xl font-semibold text-slate-900">
               Good morning, {userName || "Sensei"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-              Try to get tours completed faster at this location to improve registration rates. Keep your
-              follow-ups tight so parents sign paperwork quickly and stay ahead of the competition.
-            </p>
           </div>
           <div className="text-right text-sm text-muted-foreground">
             <p className="font-medium text-slate-600">Last 7 Days</p>
