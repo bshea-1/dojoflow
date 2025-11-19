@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "@/types/supabase";
-import { differenceInHours } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { Badge } from "@/components/ui/badge"; // Need to create Badge or just use div
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,7 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
   // Staleness Logic
   const isStale =
     lead.status === "new" &&
-    differenceInHours(new Date(), new Date(lead.created_at)) > 4;
+    differenceInDays(new Date(), new Date(lead.created_at)) > 7;
 
   const guardianName = lead.guardians?.[0]
     ? `${lead.guardians[0].first_name} ${lead.guardians[0].last_name}`
