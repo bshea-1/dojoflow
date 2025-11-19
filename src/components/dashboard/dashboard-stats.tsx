@@ -178,7 +178,7 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <SemiCircleGauge 
               value={stats.quickStats.fastToursPercent} 
-              label="Families Completing Tours Within 24 Hours"
+              label="Families Completing Tours Within 72 Hours"
               direction="good-high"
             />
              <SemiCircleGauge 

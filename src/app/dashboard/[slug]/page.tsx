@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
-import { isPast, differenceInMonths } from "date-fns";
+import { differenceInHours, differenceInMonths, isPast } from "date-fns";
 
 export default async function DashboardOverview({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -15,9 +15,9 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   // Fetch Data for Stats
   const [leadsRes, tasksRes, toursRes] = await Promise.all([
-    supabase.from("leads").select("status, created_at"),
+    supabase.from("leads").select("id, status, created_at, updated_at"),
     supabase.from("tasks").select("status, due_date, type"),
-    supabase.from("tours").select("status, scheduled_at, updated_at"),
+    supabase.from("tours").select("lead_id, status, scheduled_at, updated_at"),
   ]);
 
   const leads = leadsRes.data || [];
@@ -44,8 +44,17 @@ export default async function DashboardOverview({ params }: { params: { slug: st
   });
 
   // --- 2. Quick Stats ---
-  // A. Families Completing Tours Within 24 Hours (Placeholder)
-  const fastToursPercent = 0;
+  // A. Families Completing Tours Within 72 Hours
+  const tourCompletedLeads = leads.filter((lead) => lead.status === "tour_completed");
+  const fastToursWithin72 = tourCompletedLeads.filter((lead) => {
+    if (!lead.created_at || !lead.updated_at) return false;
+    const hoursBetween = differenceInHours(new Date(lead.updated_at), new Date(lead.created_at));
+    return hoursBetween <= 72;
+  });
+  const fastToursPercent =
+    tourCompletedLeads.length > 0
+      ? Math.round((fastToursWithin72.length / tourCompletedLeads.length) * 100)
+      : 0;
 
   // B. Tasks That Are Past Due
   const pendingTasks = tasks.filter(t => t.status === "pending");
