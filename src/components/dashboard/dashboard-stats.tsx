@@ -22,12 +22,11 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
   const clamped = Math.max(0, Math.min(100, value));
   const normalized = direction === "good-high" ? clamped : 100 - clamped;
 
-  if (normalized >= 90) return "#16a34a"; // deep green
+  if (normalized >= 90) return "#15803d";
   if (normalized >= 75) return "#22c55e";
-  if (normalized >= 60) return "#84cc16";
-  if (normalized >= 40) return "#facc15";
-  if (normalized >= 20) return "#f97316";
-  return "#dc2626"; // red
+  if (normalized >= 50) return "#a3e635";
+  if (normalized >= 25) return "#facc15";
+  return "#dc2626";
 };
 
 interface DashboardStatsProps {
@@ -66,40 +65,11 @@ function SemiCircleGauge({
   const displayValue = isZero ? 2 : value; 
   const displayColor = getGaugeColor(value, direction);
 
-  const trackData = [{ name: "track", value: 100 }];
   const valueData = [{ name: "metric", value: displayValue }];
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-full h-[150px] flex items-end justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <ResponsiveContainer width="100%" height="200%">
-            <RadialBarChart
-              cx="50%"
-              cy="50%"
-              innerRadius="82%"
-              outerRadius="98%"
-              barSize={18}
-              data={trackData}
-              startAngle={180}
-              endAngle={0}
-            >
-              <PolarAngleAxis
-                type="number"
-                domain={[0, 100]}
-                angleAxisId={0}
-                tick={false}
-              />
-              <RadialBar
-                dataKey="value"
-                fill="#e5e7eb"
-                isAnimationActive={false}
-                cornerRadius={12}
-              />
-            </RadialBarChart>
-          </ResponsiveContainer>
-        </div>
-
         <ResponsiveContainer width="100%" height="200%">
           <RadialBarChart
             cx="50%"
@@ -120,8 +90,9 @@ function SemiCircleGauge({
             <RadialBar
               dataKey="value"
               fill={displayColor}
-              isAnimationActive={false}
-              cornerRadius={12}
+              isAnimationActive
+              cornerRadius={10}
+              background={{ fill: "#e5e7eb" }}
             />
           </RadialBarChart>
         </ResponsiveContainer>
