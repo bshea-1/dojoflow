@@ -172,7 +172,7 @@ export function LeadDetailDialog({
                 Lead Details & Actions
               </DialogDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mr-8">
               <Select 
                 defaultValue={lead.status || "new"} 
                 onValueChange={(val) => updateStatusMutation.mutate(val)}
