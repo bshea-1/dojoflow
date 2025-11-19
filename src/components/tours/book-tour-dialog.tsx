@@ -5,7 +5,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +38,7 @@ import {
   bookTourSchema,
   BookTourSchema,
   programLeadOptions,
+  ProgramInterestValue,
 } from "@/lib/schemas/book-tour";
 import { bookTour } from "@/app/dashboard/[slug]/tours/actions";
 
@@ -54,6 +55,20 @@ interface BookTourDialogProps {
   initialSlot?: Date;
 }
 
+const buildDefaultValues = () => ({
+  leadId: undefined as string | undefined,
+  scheduledAt: undefined as Date | undefined,
+  notes: "",
+  newLead: {
+    parentFirstName: "",
+    parentLastName: "",
+    parentEmail: "",
+    parentPhone: "",
+    children: [{ name: "", age: 7 }],
+    programs: [] as ProgramInterestValue[],
+  },
+});
+
 export function BookTourDialog({
   franchiseSlug,
   leads,
@@ -63,24 +78,7 @@ export function BookTourDialog({
 }: BookTourDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = typeof open === "boolean" && !!onOpenChange;
-  const dialogOpen = isControlled ? (open as boolean) : internalOpen;
-
-  const buildDefaultValues = useMemo(() => {
-    return () => ({
-      leadMode: (leads.length ? "existing" : "new") as "existing" | "new",
-      leadId: leads.length ? leads[0].id : undefined,
-      scheduledAt: undefined,
-      notes: "",
-      newLead: {
-        parentFirstName: "",
-        parentLastName: "",
-        parentEmail: "",
-        parentPhone: "",
-        children: [{ name: "", age: 7 }],
-        programs: [] as typeof programLeadOptions[number][],
-      },
-    });
-  }, [leads]);
+  const dialogOpen = isControlled ? Boolean(open) : internalOpen;
 
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
@@ -91,6 +89,21 @@ export function BookTourDialog({
     control: form.control,
     name: "newLead.children",
   });
+
+  const leadId = form.watch("leadId");
+  const showNewLeadForm = !leadId;
+
+  useEffect(() => {
+    if (initialSlot) {
+      form.setValue("scheduledAt", initialSlot);
+    }
+  }, [initialSlot, form]);
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      form.reset(buildDefaultValues());
+    }
+  }, [dialogOpen, form]);
 
   async function onSubmit(data: BookTourSchema) {
     try {
@@ -120,24 +133,6 @@ export function BookTourDialog({
     }
   };
 
-  const leadMode = form.watch("leadMode");
-
-  useEffect(() => {
-    form.reset(buildDefaultValues());
-  }, [buildDefaultValues, form]);
-
-  useEffect(() => {
-    if (!leads.length) {
-      form.setValue("leadMode", "new");
-    }
-  }, [leads, form]);
-
-  useEffect(() => {
-    if (initialSlot) {
-      form.setValue("scheduledAt", initialSlot);
-    }
-  }, [initialSlot, form]);
-
   return (
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[650px]">
@@ -149,39 +144,20 @@ export function BookTourDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={leadMode === "existing" ? "default" : "outline"}
-                disabled={!leads.length}
-                onClick={() => form.setValue("leadMode", "existing")}
-              >
-                Existing Lead
-              </Button>
-              <Button
-                type="button"
-                variant={leadMode === "new" ? "default" : "outline"}
-                onClick={() => form.setValue("leadMode", "new")}
-              >
-                New Lead
-              </Button>
-            </div>
-
-            {leadMode === "existing" && (
-              <FormField
-                control={form.control}
-                name="leadId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Lead</FormLabel>
+            <FormField
+              control={form.control}
+              name="leadId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Existing Lead (optional)</FormLabel>
+                  <div className="flex items-center gap-2">
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={!leads.length}
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a lead..." />
+                          <SelectValue placeholder="Select a lead" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -192,13 +168,24 @@ export function BookTourDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+                    {field.value && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Clear lead"
+                        onClick={() => field.onChange(undefined)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {leadMode === "new" && (
+            {showNewLeadForm && (
               <div className="space-y-4 rounded-lg border p-4">
                 <h4 className="text-sm font-semibold">Parent Details</h4>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -270,14 +257,9 @@ export function BookTourDialog({
                   </div>
                   <div className="space-y-3">
                     {fields.map((fieldItem, index) => (
-                      <div
-                        key={fieldItem.id}
-                        className="rounded-md border p-3 space-y-2"
-                      >
+                      <div key={fieldItem.id} className="rounded-md border p-3 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold">
-                            Child {index + 1}
-                          </span>
+                          <span className="text-xs font-semibold">Child {index + 1}</span>
                           {fields.length > 1 && (
                             <Button
                               type="button"
@@ -331,22 +313,22 @@ export function BookTourDialog({
                       <div className="grid grid-cols-2 gap-2">
                         {programLeadOptions.map((program) => (
                           <label
-                            key={program}
+                            key={program.value}
                             className="flex items-center gap-2 rounded-md border p-2 text-sm"
                           >
                             <Checkbox
-                              checked={field.value?.includes(program) ?? false}
+                              checked={field.value?.includes(program.value) ?? false}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  field.onChange([...(field.value ?? []), program]);
+                                  field.onChange([...(field.value ?? []), program.value]);
                                 } else {
                                   field.onChange(
-                                    (field.value ?? []).filter((p) => p !== program)
+                                    (field.value ?? []).filter((p) => p !== program.value)
                                   );
                                 }
                               }}
                             />
-                            {program}
+                            {program.label}
                           </label>
                         ))}
                       </div>
@@ -406,4 +388,3 @@ export function BookTourDialog({
     </Dialog>
   );
 }
-

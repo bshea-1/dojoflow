@@ -1,13 +1,11 @@
 import { z } from "zod";
 
+const programValues = ["jr", "create", "camp"] as const;
+export type ProgramInterestValue = typeof programValues[number];
 export const programLeadOptions = [
-  "CREATE",
-  "JRs",
-  "AI",
-  "Robotics",
-  "Clubs",
-  "Birthday Party",
-  "Camps",
+  { value: "jr", label: "JR (5-7)" },
+  { value: "create", label: "Create (7-14)" },
+  { value: "camp", label: "Camps" },
 ] as const;
 
 const childSchema = z.object({
@@ -28,13 +26,12 @@ const newLeadPayload = z.object({
     .max(20, "Phone is too long"),
   children: z.array(childSchema).min(1, "Add at least one child"),
   programs: z
-    .array(z.enum(programLeadOptions))
+    .array(z.enum(programValues))
     .min(1, "Select at least one program"),
 });
 
 export const bookTourSchema = z
   .object({
-    leadMode: z.enum(["existing", "new"]).default("existing"),
     leadId: z.string().uuid("Invalid Lead ID").optional(),
     scheduledAt: z.date({
       required_error: "Please select a date and time",
@@ -48,27 +45,15 @@ export const bookTourSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.leadMode === "existing") {
-      if (!data.leadId) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Select an existing lead",
-          path: ["leadId"],
-        });
-      }
-      return;
+    if (!data.leadId && !data.newLead) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a lead or provide details",
+        path: ["leadId"],
+      });
     }
 
-    if (data.leadMode === "new") {
-      if (!data.newLead) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Provide lead details",
-          path: ["newLead"],
-        });
-        return;
-      }
-
+    if (data.newLead) {
       const validation = newLeadPayload.safeParse(data.newLead);
       if (!validation.success) {
         validation.error.issues.forEach((issue) => ctx.addIssue(issue));

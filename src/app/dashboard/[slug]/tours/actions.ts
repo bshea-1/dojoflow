@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { BookTourSchema } from "@/lib/schemas/book-tour";
+import { BookTourSchema, programLeadOptions } from "@/lib/schemas/book-tour";
 import { revalidatePath } from "next/cache";
 import { getDay } from "date-fns";
 
@@ -57,12 +57,17 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
 
   let leadId = data.leadId;
 
-  if (data.leadMode === "new" && data.newLead) {
+  if (!leadId && data.newLead) {
     // Create the lead
     const childSummary = data.newLead.children
       .map((child) => `${child.name} (${child.age})`)
       .join(", ");
-    const programSummary = data.newLead.programs.join(", ");
+    const programSummary = data.newLead.programs
+      .map(
+        (program) =>
+          programLeadOptions.find((opt) => opt.value === program)?.label ?? program
+      )
+      .join(", ");
 
     const { data: insertedLead, error: leadError } = await supabase
       .from("leads")
