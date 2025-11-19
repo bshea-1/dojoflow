@@ -389,5 +389,6 @@ export function DashboardStats({ stats, userName, showLtv = false }: DashboardSt
 
       </div>
 
+    </div>
   );
 }
