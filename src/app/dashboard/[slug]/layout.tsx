@@ -29,12 +29,16 @@ export default async function DashboardLayout({
       .from("franchise_assignments")
       .select("franchises(name, slug)")
       .eq("profile_id", user.id);
-    
+
     if (data) {
-      assignedFranchises = data.map((item: any) => ({
-        name: item.franchises.name,
-        slug: item.franchises.slug,
-      }));
+      // Guard against any null joined franchises (e.g. if a franchise was deleted)
+      assignedFranchises = data
+        .map((item: any) => item.franchises)
+        .filter((f: any) => f && f.name && f.slug)
+        .map((f: any) => ({
+          name: f.name as string,
+          slug: f.slug as string,
+        }));
     }
   } else {
     // For non-franchisees, they just have one location implicitly via profile or assignments
