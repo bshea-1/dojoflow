@@ -24,25 +24,6 @@ export default async function SettingsPage({ params }: { params: { slug: string 
 
       <form action={updateSettings.bind(null, params.slug)}>
         <div className="grid gap-6">
-          {/* General Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>General Configuration</CardTitle>
-              <CardDescription>Manage your franchise contact details.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="twilio_phone">Twilio Phone Number</Label>
-                <Input 
-                  id="twilio_phone" 
-                  name="twilio_phone" 
-                  defaultValue={settings.twilio_phone || ""} 
-                  placeholder="+1234567890" 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Operating Hours */}
           <Card>
             <CardHeader>

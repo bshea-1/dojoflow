@@ -10,9 +10,12 @@ import {
   Calendar, 
   Users, 
   Settings, 
-  Menu 
+  Menu,
+  LogOut,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { logout } from "@/app/actions/auth";
 
 interface SidebarProps {
   franchiseSlug: string;
@@ -27,6 +30,7 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
     { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare },
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
     { href: `/dashboard/${franchiseSlug}/students`, label: "Students", icon: Users },
+    { href: `/dashboard/${franchiseSlug}/members`, label: "Members (Mock)", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
 
@@ -34,7 +38,7 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
     <>
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 transform bg-card border-r transition-transform duration-200 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 w-64 transform bg-card border-r transition-transform duration-200 ease-in-out flex flex-col",
           !sidebarOpen && "-translate-x-full"
         )}
       >
@@ -44,7 +48,7 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
              <Menu className="h-4 w-4" />
           </Button>
         </div>
-        <nav className="flex flex-col gap-2 p-4">
+        <nav className="flex-1 flex flex-col gap-2 p-4">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -63,6 +67,15 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
             );
           })}
         </nav>
+        
+        <div className="p-4 border-t">
+          <form action={logout}>
+            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </form>
+        </div>
       </div>
       
       {/* Mobile Overlay */}
@@ -75,4 +88,3 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
     </>
   );
 }
-
