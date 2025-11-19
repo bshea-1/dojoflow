@@ -38,13 +38,12 @@ interface DashboardStatsProps {
 }
 
 function SemiCircleGauge({ value, color, label, subLabel }: { value: number; color: string; label: string; subLabel?: string }) {
-  // If value is 0, we want a visible "empty" track (background) and a very small colored segment.
-  // The background prop on RadialBar will render the track for the max domain.
+  // If value is 0, we want a visible "empty" track (background) and a very small colored segment (red dot).
   
   const isZero = value === 0;
-  // If 0, we display a tiny value (e.g. 1 or 2) to make a visible 'dot' or 'sliver'
+  // If 0, we display a small value (2) to make a visible 'dot'
   const displayValue = isZero ? 2 : value; 
-  const displayColor = isZero ? "#ef4444" : color; // Red if 0%, else the passsed color
+  const displayColor = isZero ? "#ef4444" : color; // Red if 0%, else the passed color
 
   const data = [{ name: "value", value: displayValue, fill: displayColor }];
   
@@ -57,15 +56,11 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
             cy="50%" 
             innerRadius="80%" 
             outerRadius="100%" 
-            barSize={20} 
+            barSize={24} 
             data={data} 
             startAngle={180} 
             endAngle={0}
           >
-            {/* 
-              PolarAngleAxis with domain [0, 100] ensures the chart scale is always 0-100%.
-              This makes the 'background' prop on RadialBar render as a full 180-degree semicircle (the track).
-            */}
             <PolarAngleAxis
               type="number"
               domain={[0, 100]}
@@ -73,9 +68,9 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
               tick={false}
             />
             <RadialBar
-              background={{ fill: '#f3f4f6' }} // Light gray track
+              background={{ fill: '#e2e8f0' }} // Darker gray for better visibility
               dataKey="value"
-              cornerRadius={10} // Rounded ends for the value bar
+              cornerRadius={12} // Rounded ends
             />
           </RadialBarChart>
         </ResponsiveContainer>
