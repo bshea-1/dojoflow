@@ -153,7 +153,7 @@ export async function updateLeadDetails(
       .update({
         first_name: payload.student.firstName,
         program_interest: payload.student.programInterest,
-        dob: payload.student.dob || null,
+        dob: payload.student.dob || "1970-01-01",
       })
       .eq("id", payload.studentId);
 
