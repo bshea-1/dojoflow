@@ -25,7 +25,7 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
   if (normalized >= 75) return "#22c55e"; // green
   if (normalized >= 50) return "#84cc16"; // lime
   if (normalized >= 25) return "#facc15"; // yellow
-  return "#f97316"; // orange/red
+  return "#ef4444"; // red
 };
 
 interface DashboardStatsProps {
@@ -64,13 +64,40 @@ function SemiCircleGauge({
   const displayValue = isZero ? 2 : value; 
   const displayColor = getGaugeColor(value, direction);
 
-  const data = [
-    { name: "metric", track: 100, value: displayValue },
-  ];
+  const trackData = [{ name: "track", value: 100 }];
+  const valueData = [{ name: "metric", value: displayValue }];
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-full h-[150px] flex items-end justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <ResponsiveContainer width="100%" height="200%">
+            <RadialBarChart
+              cx="50%"
+              cy="50%"
+              innerRadius="80%"
+              outerRadius="100%"
+              barSize={24}
+              data={trackData}
+              startAngle={180}
+              endAngle={0}
+            >
+              <PolarAngleAxis
+                type="number"
+                domain={[0, 100]}
+                angleAxisId={0}
+                tick={false}
+              />
+              <RadialBar
+                dataKey="value"
+                fill="#e5e7eb"
+                isAnimationActive={false}
+                cornerRadius={12}
+              />
+            </RadialBarChart>
+          </ResponsiveContainer>
+        </div>
+
         <ResponsiveContainer width="100%" height="200%">
           <RadialBarChart
             cx="50%"
@@ -78,7 +105,7 @@ function SemiCircleGauge({
             innerRadius="80%"
             outerRadius="100%"
             barSize={24}
-            data={data}
+            data={valueData}
             startAngle={180}
             endAngle={0}
           >
@@ -87,12 +114,6 @@ function SemiCircleGauge({
               domain={[0, 100]}
               angleAxisId={0}
               tick={false}
-            />
-            <RadialBar
-              dataKey="track"
-              fill="#d7dce3"
-              isAnimationActive={false}
-              cornerRadius={12}
             />
             <RadialBar
               dataKey="value"
