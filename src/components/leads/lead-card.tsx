@@ -1,15 +1,9 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database } from "@/types/supabase";
 import { differenceInDays } from "date-fns";
-import { Badge } from "@/components/ui/badge"; // Need to create Badge or just use div
 import { cn } from "@/lib/utils";
-
-// We need a type that includes the guardian
-type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: Database["public"]["Tables"]["guardians"]["Row"][];
-};
+import { LeadWithGuardian } from "./types";
 
 interface LeadCardProps {
   lead: LeadWithGuardian;

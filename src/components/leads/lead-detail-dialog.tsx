@@ -39,21 +39,12 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-import { Database } from "@/types/supabase";
 import { getLeadTasks, updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/actions";
 import { createTask, updateTaskStatus, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
 import { deleteLead } from "@/app/dashboard/[slug]/pipeline/delete-action";
 import { LeadEditForm } from "./lead-edit-form";
 import { EditLeadSchema } from "@/lib/schemas/edit-lead";
-
-type StudentRow = Database["public"]["Tables"]["students"]["Row"];
-type GuardianRow = Database["public"]["Tables"]["guardians"]["Row"] & {
-  students: StudentRow[];
-};
-
-type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: GuardianRow[];
-};
+import { LeadWithGuardian } from "./types";
 
 interface LeadDetailDialogProps {
   lead: LeadWithGuardian;

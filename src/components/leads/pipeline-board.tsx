@@ -24,13 +24,7 @@ import { toast } from "sonner";
 import { LeadDetailDialog } from "./lead-detail-dialog";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
-type GuardianWithStudents = Database["public"]["Tables"]["guardians"]["Row"] & {
-  students: Database["public"]["Tables"]["students"]["Row"][];
-};
-
-type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: GuardianWithStudents[];
-};
+import { LeadWithGuardian } from "./types";
 
 const COLUMNS: { id: LeadStatus; title: string }[] = [
   { id: "new", title: "New Leads" },

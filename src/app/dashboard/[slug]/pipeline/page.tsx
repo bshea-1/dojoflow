@@ -1,16 +1,7 @@
 import { PipelineBoard } from "@/components/leads/pipeline-board";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { createClient } from "@/lib/supabase/server";
-import { Database } from "@/types/supabase";
-
-type StudentRow = Database["public"]["Tables"]["students"]["Row"];
-type GuardianRow = Database["public"]["Tables"]["guardians"]["Row"] & {
-  students: StudentRow[];
-};
-
-type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: GuardianRow[];
-};
+import { LeadWithGuardian } from "@/components/leads/types";
 
 export default async function PipelinePage({ params }: { params: { slug: string } }) {
   const supabase = createClient();

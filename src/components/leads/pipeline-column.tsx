@@ -2,11 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { LeadCard } from "./lead-card";
 import { cn } from "@/lib/utils";
-import { Database } from "@/types/supabase";
-
-type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
-  guardians: Database["public"]["Tables"]["guardians"]["Row"][];
-};
+import { LeadWithGuardian } from "./types";
 
 interface PipelineColumnProps {
   id: string;
