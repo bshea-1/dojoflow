@@ -45,6 +45,7 @@ export default async function DashboardOverview({ params }: { params: { slug: st
     : 0;
 
   // C. New Families Getting To Wait List or Registered (Enrolled / Total)
+  const enrolledCount = leads.filter(l => l.status === "enrolled").length;
   const totalLeads = leads.length;
   const waitlistPercent = totalLeads > 0
     ? Math.round((enrolledCount / totalLeads) * 100)
