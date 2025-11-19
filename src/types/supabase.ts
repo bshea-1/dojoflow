@@ -212,6 +212,47 @@ export interface Database {
           created_by?: string | null
         }
       }
+      tasks: {
+        Row: {
+          id: string
+          franchise_id: string
+          lead_id: string | null
+          assigned_to: string | null
+          title: string
+          description: string | null
+          due_date: string | null
+          status: 'pending' | 'completed'
+          type: 'call' | 'email' | 'text' | 'review' | 'other'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          franchise_id: string
+          lead_id?: string | null
+          assigned_to?: string | null
+          title: string
+          description?: string | null
+          due_date?: string | null
+          status?: 'pending' | 'completed'
+          type?: 'call' | 'email' | 'text' | 'review' | 'other'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          franchise_id?: string
+          lead_id?: string | null
+          assigned_to?: string | null
+          title?: string
+          description?: string | null
+          due_date?: string | null
+          status?: 'pending' | 'completed'
+          type?: 'call' | 'email' | 'text' | 'review' | 'other'
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

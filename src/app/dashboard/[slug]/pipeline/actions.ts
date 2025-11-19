@@ -89,3 +89,16 @@ export async function createLead(data: NewLeadSchema, franchiseSlug: string) {
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
 }
+
+export async function getLeadTasks(leadId: string) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("due_date", { ascending: true });
+
+  if (error) return [];
+  return data;
+}

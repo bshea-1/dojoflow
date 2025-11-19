@@ -12,9 +12,10 @@ interface PipelineColumnProps {
   id: string;
   title: string;
   leads: LeadWithGuardian[];
+  onLeadClick?: (lead: LeadWithGuardian) => void;
 }
 
-export function PipelineColumn({ id, title, leads }: PipelineColumnProps) {
+export function PipelineColumn({ id, title, leads, onLeadClick }: PipelineColumnProps) {
   const { setNodeRef } = useDroppable({
     id,
   });
@@ -31,11 +32,14 @@ export function PipelineColumn({ id, title, leads }: PipelineColumnProps) {
       <div ref={setNodeRef} className="flex-1 flex flex-col gap-2 overflow-y-auto min-h-[100px]">
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} />
+            <LeadCard 
+              key={lead.id} 
+              lead={lead} 
+              onClick={() => onLeadClick?.(lead)}
+            />
           ))}
         </SortableContext>
       </div>
     </div>
   );
 }
-

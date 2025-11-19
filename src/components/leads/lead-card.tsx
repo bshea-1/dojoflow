@@ -13,9 +13,10 @@ type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
 
 interface LeadCardProps {
   lead: LeadWithGuardian;
+  onClick?: () => void;
 }
 
-export function LeadCard({ lead }: LeadCardProps) {
+export function LeadCard({ lead, onClick }: LeadCardProps) {
   const {
     attributes,
     listeners,
@@ -57,7 +58,10 @@ export function LeadCard({ lead }: LeadCardProps) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
-      <Card className={cn("cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow", isStale && "border-destructive border-2")}>
+      <Card 
+        className={cn("cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow", isStale && "border-destructive border-2")}
+        onClick={onClick}
+      >
         <CardHeader className="p-4 pb-2">
           <div className="flex justify-between items-start">
             <CardTitle className="text-sm font-semibold">
@@ -82,4 +86,3 @@ export function LeadCard({ lead }: LeadCardProps) {
     </div>
   );
 }
-

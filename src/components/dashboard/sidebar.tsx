@@ -12,7 +12,8 @@ import {
   Settings, 
   Menu,
   LogOut,
-  UserCheck
+  UserCheck,
+  CheckSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/actions/auth";
@@ -28,6 +29,7 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
   const links = [
     { href: `/dashboard/${franchiseSlug}`, label: "Overview", icon: LayoutDashboard },
     { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare },
+    { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare },
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
     { href: `/dashboard/${franchiseSlug}/students`, label: "Students", icon: Users },
     { href: `/dashboard/${franchiseSlug}/members`, label: "Members (Mock)", icon: UserCheck },

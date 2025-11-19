@@ -21,6 +21,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/actions";
 import { Database } from "@/types/supabase";
 import { toast } from "sonner";
+import { LeadDetailDialog } from "./lead-detail-dialog";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
 type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
@@ -55,19 +56,11 @@ export function PipelineBoard({ franchiseSlug }: PipelineBoardProps) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadWithGuardian | null>(null);
 
   const { data: leads = [] } = useQuery({
     queryKey: ["leads", franchiseSlug],
     queryFn: async () => {
-      // In real app, filter by franchise_id looked up from slug, or assume RLS handles it if logged in.
-      // Since RLS uses auth.uid() -> profile -> franchise_id, we just select all.
-      // Wait, the user might have access to multiple franchises?
-      // The RLS says "get_my_franchise_id()". 
-      // If the user is an owner of multiple, the current RLS only allows ONE franchise per profile.
-      // Multi-unit owners usually have one profile per franchise or a many-to-many.
-      // The schema has `franchise_id` on `profiles` (Single Tenant per User).
-      // So `select * from leads` is safe and correct for the current schema.
-      
       const { data, error } = await supabase
         .from("leads")
         .select("*, guardians(*)");
@@ -164,27 +157,38 @@ export function PipelineBoard({ franchiseSlug }: PipelineBoardProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex h-[calc(100vh-10rem)] gap-4 overflow-x-auto pb-4">
-        {columns.map((col) => (
-          <PipelineColumn
-            key={col.id}
-            id={col.id || "new"}
-            title={col.title}
-            leads={col.leads}
-          />
-        ))}
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex h-[calc(100vh-10rem)] gap-4 overflow-x-auto pb-4">
+          {columns.map((col) => (
+            <PipelineColumn
+              key={col.id}
+              id={col.id || "new"}
+              title={col.title}
+              leads={col.leads}
+              onLeadClick={(lead) => setSelectedLead(lead)}
+            />
+          ))}
+        </div>
 
-      <DragOverlay dropAnimation={dropAnimation}>
-        {activeLead ? <LeadCard lead={activeLead} /> : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeLead ? <LeadCard lead={activeLead} /> : null}
+        </DragOverlay>
+      </DndContext>
+
+      {selectedLead && (
+        <LeadDetailDialog
+          lead={selectedLead}
+          franchiseSlug={franchiseSlug}
+          open={!!selectedLead}
+          onOpenChange={(open) => !open && setSelectedLead(null)}
+        />
+      )}
+    </>
   );
 }
-
