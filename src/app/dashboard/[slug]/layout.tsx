@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { PageTransition } from "@/components/dashboard/page-transition";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -101,7 +102,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <main className="p-6">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>
