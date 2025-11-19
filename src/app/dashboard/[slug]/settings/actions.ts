@@ -24,12 +24,7 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
     }
   });
 
-  const twilio_phone = formData.get("twilio_phone") as string;
-
-  // Fetch current settings to merge (if we had other settings)
-  // For now, we just overwrite the specific keys in the JSONB
-  
-  // We need the franchise ID first
+  // Fetch current settings to merge
   const { data: franchise } = await supabase
     .from("franchises")
     .select("id, settings")
@@ -37,7 +32,6 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
     .single();
 
   if (!franchise) {
-    // Ideally handle error UI
     return;
   }
 
@@ -46,7 +40,7 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
   const newSettings = {
     ...currentSettings,
     operating_hours,
-    twilio_phone
+    // We do NOT update twilio_phone here anymore as requested
   };
 
   const { error } = await supabase
@@ -55,10 +49,9 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
     .eq("id", franchise.id);
 
   if (error) {
-    // Ideally handle error UI
+    console.error("Failed to update settings:", error);
     return;
   }
 
   revalidatePath(`/dashboard/${franchiseSlug}/settings`);
-  // We don't return anything, satisfying the void requirement
 }

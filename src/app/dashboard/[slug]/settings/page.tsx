@@ -18,6 +18,13 @@ export default async function SettingsPage({ params }: { params: { slug: string 
   const hours = settings.operating_hours || {};
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  // Default hours logic
+  const getDefaultHours = (day: string) => {
+    if (day === "Sat") return { open: "10:00", close: "15:00" };
+    if (day === "Sun") return null; // Closed
+    return { open: "15:00", close: "19:00" }; // Mon-Fri
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-3xl font-bold tracking-tight">Franchise Settings</h1>
@@ -32,9 +39,22 @@ export default async function SettingsPage({ params }: { params: { slug: string 
             </CardHeader>
             <CardContent className="space-y-4">
               {days.map(day => {
-                const daySettings = hours[day];
-                const isOpen = !!daySettings;
-                
+                const savedSettings = hours[day];
+                const hasSavedSettings = Object.keys(hours).length > 0;
+                const fallback = getDefaultHours(day);
+
+                const effectiveSettings = hasSavedSettings
+                  ? day in hours
+                    ? savedSettings
+                    : fallback
+                  : fallback;
+
+                const isOpen = effectiveSettings !== null;
+                const defaultOpenValue =
+                  effectiveSettings?.open ?? (isOpen ? fallback?.open ?? "" : "");
+                const defaultCloseValue =
+                  effectiveSettings?.close ?? (isOpen ? fallback?.close ?? "" : "");
+
                 return (
                   <div key={day} className="flex items-center gap-4 p-2 border rounded-md">
                     <div className="w-12 font-bold">{day}</div>
@@ -54,15 +74,17 @@ export default async function SettingsPage({ params }: { params: { slug: string 
                       <Input 
                         type="time" 
                         name={`${day}_open`} 
-                        defaultValue={daySettings?.open || "10:00"} 
+                        defaultValue={defaultOpenValue || undefined} 
                         className="w-32"
+                        disabled={!isOpen}
                       />
                       <span>to</span>
                       <Input 
                         type="time" 
                         name={`${day}_close`} 
-                        defaultValue={daySettings?.close || "19:00"} 
+                        defaultValue={defaultCloseValue || undefined} 
                         className="w-32"
+                        disabled={!isOpen}
                       />
                     </div>
                   </div>

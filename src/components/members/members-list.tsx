@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
-  Filter,
   Mail,
   MessageSquare,
   MoreHorizontal,
@@ -34,7 +33,6 @@ interface Member {
   id: string;
   guardian_name: string;
   student_name: string;
-  belt: string;
   program: string;
   status: string;
   email: string;
@@ -45,13 +43,11 @@ interface MembersListProps {
   initialMembers: Member[];
 }
 
-const BELT_OPTIONS = ["White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Red", "Black"];
 const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
 
 export function MembersList({ initialMembers }: MembersListProps) {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [beltFilters, setBeltFilters] = useState<string[]>([]);
   const [programFilters, setProgramFilters] = useState<string[]>([]);
 
   const filteredMembers = useMemo(() => {
@@ -59,14 +55,12 @@ export function MembersList({ initialMembers }: MembersListProps) {
       const matchesSearch =
         member.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.guardian_name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesBelt =
-        beltFilters.length === 0 || beltFilters.includes(member.belt);
       const matchesProgram =
         programFilters.length === 0 || programFilters.includes(member.program);
 
-      return matchesSearch && matchesBelt && matchesProgram;
+      return matchesSearch && matchesProgram;
     });
-  }, [initialMembers, searchQuery, beltFilters, programFilters]);
+  }, [initialMembers, searchQuery, programFilters]);
 
   const toggleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -136,30 +130,6 @@ export function MembersList({ initialMembers }: MembersListProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Belt {beltFilters.length > 0 && `(${beltFilters.length})`}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {BELT_OPTIONS.map((belt) => (
-              <DropdownMenuCheckboxItem
-                key={belt}
-                checked={beltFilters.includes(belt)}
-                onCheckedChange={(checked) =>
-                  setBeltFilters((prev) =>
-                    checked ? [...prev, belt] : prev.filter((b) => b !== belt)
-                  )
-                }
-              >
-                {belt}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
               <SlidersHorizontal className="h-4 w-4" />
               Program {programFilters.length > 0 && `(${programFilters.length})`}
             </Button>
@@ -201,9 +171,9 @@ export function MembersList({ initialMembers }: MembersListProps) {
               </TableHead>
               <TableHead>Guardian</TableHead>
               <TableHead>Student</TableHead>
-              <TableHead>Belt</TableHead>
               <TableHead>Program</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Contact</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -220,14 +190,15 @@ export function MembersList({ initialMembers }: MembersListProps) {
                 </TableCell>
                 <TableCell className="font-medium">{member.guardian_name}</TableCell>
                 <TableCell>{member.student_name}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{member.belt}</Badge>
-                </TableCell>
                 <TableCell className="capitalize">{member.program}</TableCell>
                 <TableCell>
                   <Badge variant={member.status === "Active" ? "default" : "outline"}>
                     {member.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm font-medium">{member.email}</div>
+                  <div className="text-xs text-muted-foreground">{member.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

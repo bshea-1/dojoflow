@@ -18,15 +18,15 @@ export default function LoginPage() {
           <div className="grid grid-cols-3 gap-4 mt-12 opacity-80 text-sm">
             <div className="p-4 bg-white/10 rounded-lg">
               <div className="font-bold text-lg mb-1">Lead</div>
-              <div>Tracking</div>
+              <div>Pipeline</div>
             </div>
             <div className="p-4 bg-white/10 rounded-lg">
               <div className="font-bold text-lg mb-1">Tour</div>
               <div>Scheduling</div>
             </div>
             <div className="p-4 bg-white/10 rounded-lg">
-              <div className="font-bold text-lg mb-1">Belt</div>
-              <div>Promotions</div>
+              <div className="font-bold text-lg mb-1">Follow-up</div>
+              <div>Actions</div>
             </div>
           </div>
         </div>

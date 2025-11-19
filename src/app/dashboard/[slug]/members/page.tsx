@@ -6,8 +6,12 @@ export default async function MembersPage({ params }: { params: { slug: string }
 
   return (
     <div className="h-full flex flex-col space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Members</h1>
+        <p className="text-sm text-muted-foreground max-w-xl">
+          This view focuses on guardian/parent contacts so you can keep following up on leads
+          without the distractions of belt tracking.
+        </p>
       </div>
       
       <div className="flex-1 overflow-y-auto pb-10">
