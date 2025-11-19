@@ -253,7 +253,7 @@ export function LeadDetailDialog({
                   </div>
                   
                   {/* Quick Presets */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <Badge 
                       variant="outline" 
                       className="cursor-pointer hover:bg-accent"
@@ -283,6 +283,66 @@ export function LeadDetailDialog({
                       }}
                     >
                       Review in 7 Days
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        createTaskMutation.mutate({
+                          title: "Email Follow-up",
+                          type: "email",
+                          date: tomorrow.toISOString().split('T')[0]
+                        });
+                      }}
+                    >
+                      Email Follow-up
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        const twoDays = new Date();
+                        twoDays.setDate(twoDays.getDate() + 2);
+                        createTaskMutation.mutate({
+                          title: "Text Check-in",
+                          type: "text",
+                          date: twoDays.toISOString().split('T')[0]
+                        });
+                      }}
+                    >
+                      Text Check-in
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        createTaskMutation.mutate({
+                          title: "Post-Tour Follow-up",
+                          type: "call",
+                          date: tomorrow.toISOString().split('T')[0]
+                        });
+                      }}
+                    >
+                      Post-Tour Follow-up
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        const month = new Date();
+                        month.setDate(month.getDate() + 30);
+                        createTaskMutation.mutate({
+                          title: "Monthly Check-in",
+                          type: "call",
+                          date: month.toISOString().split('T')[0]
+                        });
+                      }}
+                    >
+                      Monthly Check-in
                     </Badge>
                   </div>
                 </div>

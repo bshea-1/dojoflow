@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isPast, isFuture, startOfDay } from "date-fns";
 import { 
-  CheckCircle2, 
-  Circle, 
+  Calendar, 
   Clock, 
   Mail, 
   MessageSquare, 
@@ -31,7 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Database } from "@/types/supabase";
-import { getTasks, createTask, updateTaskStatus, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
+import { getTasks, createTask, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
+import { TaskDetailDialog } from "./task-detail-dialog";
 
 type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
   leads?: {
@@ -53,6 +53,7 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
   const [newTaskDate, setNewTaskDate] = useState("");
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const { data: tasks = initialTasks } = useQuery({
     queryKey: ["tasks", franchiseSlug],
@@ -74,14 +75,6 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
       setNewTaskTitle("");
       setNewTaskDate("");
       toast.success("Task added");
-    },
-  });
-
-  const toggleTaskMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "pending" | "completed" }) => 
-      updateTaskStatus(id, status, franchiseSlug),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", franchiseSlug] });
     },
   });
 
@@ -134,25 +127,11 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
         {taskList.map((task) => (
           <div 
             key={task.id} 
-            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
+            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group cursor-pointer"
+            onClick={() => setSelectedTask(task)}
           >
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0"
-                onClick={() => toggleTaskMutation.mutate({ 
-                  id: task.id, 
-                  status: task.status === "completed" ? "pending" : "completed" 
-                })}
-              >
-                {task.status === "completed" ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground" />
-                )}
-              </Button>
-              <div className={task.status === "completed" ? "opacity-50 line-through" : ""}>
+              <div className={task.status === "completed" ? "opacity-50" : ""}>
                 <div className="flex items-center gap-2">
                   {getIcon(task.type)}
                   <span className="font-medium text-sm">{task.title}</span>
@@ -168,13 +147,21 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
                     {format(new Date(task.due_date), "MMM d, yyyy")}
                   </div>
                 )}
+                {task.outcome && (
+                  <div className="text-xs text-muted-foreground mt-1 italic">
+                    Outcome: {task.outcome}
+                  </div>
+                )}
               </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-              onClick={() => deleteTaskMutation.mutate(task.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteTaskMutation.mutate(task.id);
+              }}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -289,7 +276,34 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {selectedTask && (
+        <TaskDetailDialog
+          task={selectedTask}
+          franchiseSlug={franchiseSlug}
+          open={!!selectedTask}
+          onOpenChange={(open) => !open && setSelectedTask(null)}
+        />
+      )}
     </div>
   );
 }
 
+function Circle(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+  )
+}

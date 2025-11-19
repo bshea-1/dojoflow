@@ -72,17 +72,28 @@ export async function createTask(data: TaskSchema, franchiseSlug: string) {
   return { success: true };
 }
 
-export async function updateTaskStatus(taskId: string, status: "pending" | "completed", franchiseSlug: string) {
+export async function updateTaskStatus(
+  taskId: string, 
+  status: "pending" | "completed", 
+  franchiseSlug: string,
+  outcome?: string
+) {
   const supabase = createClient();
+
+  const updateData: any = { status };
+  if (outcome !== undefined) {
+    updateData.outcome = outcome;
+  }
 
   const { error } = await supabase
     .from("tasks")
-    .update({ status })
+    .update(updateData)
     .eq("id", taskId);
 
   if (error) return { error: error.message };
 
   revalidatePath(`/dashboard/${franchiseSlug}/actions`);
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
 }
 
@@ -97,6 +108,6 @@ export async function deleteTask(taskId: string, franchiseSlug: string) {
   if (error) return { error: error.message };
 
   revalidatePath(`/dashboard/${franchiseSlug}/actions`);
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
 }
-
