@@ -83,14 +83,23 @@ export function LeadDetailDialog({
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: async () => {
-      if (!newTaskTitle) return;
-      await createTask({
-        title: newTaskTitle,
-        type: newTaskType,
-        dueDate: newTaskDate ? new Date(newTaskDate) : undefined,
+    mutationFn: async (params?: { title: string; type: any; date: string }) => {
+      const title = params?.title || newTaskTitle;
+      const type = params?.type || newTaskType;
+      const date = params?.date || newTaskDate;
+
+      if (!title) return;
+
+      const result = await createTask({
+        title,
+        type,
+        dueDate: date ? new Date(date) : undefined,
         leadId: lead.id,
       }, franchiseSlug);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", lead.id] });
@@ -99,6 +108,9 @@ export function LeadDetailDialog({
       setNewTaskDate("");
       toast.success("Task added");
     },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create task");
+    }
   });
 
   const toggleTaskMutation = useMutation({
@@ -233,7 +245,7 @@ export function LeadDetailDialog({
                     <div className="flex-1" />
                     <Button 
                       size="sm" 
-                      onClick={() => createTaskMutation.mutate()}
+                      onClick={() => createTaskMutation.mutate(undefined)}
                       disabled={!newTaskTitle || createTaskMutation.isPending}
                     >
                       Add Task
@@ -246,11 +258,13 @@ export function LeadDetailDialog({
                       variant="outline" 
                       className="cursor-pointer hover:bg-accent"
                       onClick={() => {
-                        setNewTaskType("call");
-                        setNewTaskTitle("Call lead");
                         const tomorrow = new Date();
                         tomorrow.setDate(tomorrow.getDate() + 1);
-                        setNewTaskDate(tomorrow.toISOString().split('T')[0]);
+                        createTaskMutation.mutate({
+                          title: "Call lead",
+                          type: "call",
+                          date: tomorrow.toISOString().split('T')[0]
+                        });
                       }}
                     >
                       Call Tomorrow
@@ -259,11 +273,13 @@ export function LeadDetailDialog({
                       variant="outline" 
                       className="cursor-pointer hover:bg-accent"
                       onClick={() => {
-                        setNewTaskType("review");
-                        setNewTaskTitle("Review lead status");
                         const nextWeek = new Date();
                         nextWeek.setDate(nextWeek.getDate() + 7);
-                        setNewTaskDate(nextWeek.toISOString().split('T')[0]);
+                        createTaskMutation.mutate({
+                          title: "Review lead status",
+                          type: "review",
+                          date: nextWeek.toISOString().split('T')[0]
+                        });
                       }}
                     >
                       Review in 7 Days
