@@ -60,18 +60,20 @@ export const bookTourSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-    if (!data.leadId && !data.newLead) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Select a lead or provide details",
-        path: ["leadId"],
-      });
-    }
-
-    if (data.newLead) {
-      const validation = newLeadPayload.safeParse(data.newLead);
-      if (!validation.success) {
-        validation.error.issues.forEach((issue) => ctx.addIssue(issue));
+    // If NO lead is selected, then New Lead details are REQUIRED
+    if (!data.leadId) {
+      if (!data.newLead) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please provide lead details",
+          path: ["newLead"],
+        });
+      } else {
+        // Validate newLead ONLY if we are in "New Lead" mode
+        const validation = newLeadPayload.safeParse(data.newLead);
+        if (!validation.success) {
+          validation.error.issues.forEach((issue) => ctx.addIssue(issue));
+        }
       }
     }
   });

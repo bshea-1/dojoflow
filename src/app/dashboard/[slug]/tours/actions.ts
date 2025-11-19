@@ -84,15 +84,19 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       return { error: "Failed to create lead record" };
     }
 
-    const { error: guardianError } = await supabase.from("guardians").insert({
-      lead_id: insertedLead.id,
-      first_name: data.newLead.parentFirstName,
-      last_name: data.newLead.parentLastName,
-      email: data.newLead.parentEmail,
-      phone: data.newLead.parentPhone,
-    });
+    const { data: insertedGuardian, error: guardianError } = await supabase
+      .from("guardians")
+      .insert({
+        lead_id: insertedLead.id,
+        first_name: data.newLead.parentFirstName,
+        last_name: data.newLead.parentLastName,
+        email: data.newLead.parentEmail,
+        phone: data.newLead.parentPhone,
+      })
+      .select("id") // return the ID
+      .single();
 
-    if (guardianError) {
+    if (guardianError || !insertedGuardian) {
       return { error: "Failed to create guardian record" };
     }
     
@@ -100,7 +104,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     const { error: studentError } = await supabase
       .from("students")
       .insert({
-        guardian_id: (await supabase.from("guardians").select("id").eq("lead_id", insertedLead.id).single()).data?.id!,
+        guardian_id: insertedGuardian.id,
         first_name: data.newLead.children[0]?.name || "Student",
         dob: "1970-01-01", // Default DOB
         program_interest: data.newLead.programs
@@ -157,7 +161,6 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     
   if (taskError) {
       console.error("Failed to create task for tour:", taskError);
-      // Don't return error here as the primary action (booking tour) succeeded
   }
 
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
