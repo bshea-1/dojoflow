@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -63,6 +62,7 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
 interface DashboardStatsProps {
   userName?: string;
   showLtv?: boolean;
+  transitionKey?: string;
   stats: {
     totalLifetimeValue: number;
     quickStats: {
@@ -176,12 +176,12 @@ function SemiCircleGauge({
   );
 }
 
-export function DashboardStats({ stats, userName, showLtv = false }: DashboardStatsProps) {
+export function DashboardStats({ stats, userName, showLtv = false, transitionKey }: DashboardStatsProps) {
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   });
-  const statsKey = useMemo(() => JSON.stringify(stats), [stats]);
+  const statsKey = transitionKey ?? "default";
 
   return (
     <AnimatePresence mode="wait">
