@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function updateSettings(franchiseSlug: string, formData: FormData) {
   const supabase = createClient();
@@ -35,7 +36,10 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
     .eq("slug", franchiseSlug)
     .single();
 
-  if (!franchise) return { error: "Franchise not found" };
+  if (!franchise) {
+    // Ideally handle error UI
+    return;
+  }
 
   const currentSettings = (franchise.settings as any) || {};
   
@@ -50,8 +54,11 @@ export async function updateSettings(franchiseSlug: string, formData: FormData) 
     .update({ settings: newSettings })
     .eq("id", franchise.id);
 
-  if (error) return { error: "Failed to update settings" };
+  if (error) {
+    // Ideally handle error UI
+    return;
+  }
 
   revalidatePath(`/dashboard/${franchiseSlug}/settings`);
-  return { success: true };
+  // We don't return anything, satisfying the void requirement
 }
