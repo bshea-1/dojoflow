@@ -79,6 +79,7 @@ export function BookTourDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = typeof open === "boolean" && !!onOpenChange;
   const dialogOpen = isControlled ? Boolean(open) : internalOpen;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
@@ -106,10 +107,12 @@ export function BookTourDialog({
   }, [dialogOpen, form]);
 
   async function onSubmit(data: BookTourSchema) {
+    setIsSubmitting(true);
     try {
       const result = await bookTour(data, franchiseSlug);
       if (result.error) {
         toast.error(result.error);
+        setIsSubmitting(false);
         return;
       }
 
@@ -117,9 +120,17 @@ export function BookTourDialog({
       handleOpenChange(false);
       form.reset(buildDefaultValues());
     } catch (error) {
+      console.error("Booking error:", error);
       toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   }
+
+  const onInvalid = (errors: any) => {
+    console.log("Validation errors:", errors);
+    toast.error("Please check the form for errors");
+  };
 
   const handleOpenChange = (next: boolean) => {
     if (isControlled) {
@@ -135,7 +146,7 @@ export function BookTourDialog({
 
   return (
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Book a Tour</DialogTitle>
           <DialogDescription>
@@ -143,7 +154,7 @@ export function BookTourDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-5">
             <FormField
               control={form.control}
               name="leadId"
@@ -366,7 +377,9 @@ export function BookTourDialog({
             />
 
             <DialogFooter>
-              <Button type="submit">Confirm Booking</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Booking..." : "Confirm Booking"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
