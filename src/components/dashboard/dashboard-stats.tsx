@@ -103,14 +103,18 @@ function SemiCircleGauge({
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute bottom-0 mb-4 text-center">
-          <div className={`text-3xl font-bold ${isZero ? "text-destructive" : ""}`}>
+          <div className="text-3xl font-bold" style={{ color: displayColor }}>
             {value}%
           </div>
         </div>
       </div>
       <div className="text-center mt-2 space-y-1">
         <p className="text-xs font-medium px-4">{label}</p>
-        {subLabel && <p className="text-[10px] text-muted-foreground">{subLabel}</p>}
+        {subLabel && (
+          <p className="text-[10px]" style={{ color: displayColor }}>
+            {subLabel}
+          </p>
+        )}
       </div>
     </div>
   );
