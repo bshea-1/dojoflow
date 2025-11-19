@@ -31,8 +31,7 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
     { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare },
     { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare },
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
-    { href: `/dashboard/${franchiseSlug}/students`, label: "Students", icon: Users },
-    { href: `/dashboard/${franchiseSlug}/members`, label: "Members (Mock)", icon: UserCheck },
+    { href: `/dashboard/${franchiseSlug}/members`, label: "Members", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
 

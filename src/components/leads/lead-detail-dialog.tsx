@@ -42,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import { Database } from "@/types/supabase";
 import { getLeadTasks, updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/actions";
 import { createTask, updateTaskStatus, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
+import { deleteLead } from "@/app/dashboard/[slug]/pipeline/delete-action";
 
 type LeadWithGuardian = Database["public"]["Tables"]["leads"]["Row"] & {
   guardians: Database["public"]["Tables"]["guardians"]["Row"][];
@@ -118,6 +119,15 @@ export function LeadDetailDialog({
     },
   });
 
+  const deleteLeadMutation = useMutation({
+    mutationFn: () => deleteLead(lead.id, franchiseSlug),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads", franchiseSlug] });
+      toast.success("Lead deleted");
+      onOpenChange(false);
+    },
+  });
+
   const guardian = lead.guardians[0];
   const guardianName = guardian ? `${guardian.first_name} ${guardian.last_name}` : "Unknown";
 
@@ -142,22 +152,35 @@ export function LeadDetailDialog({
                 Lead Details & Actions
               </DialogDescription>
             </div>
-            <Select 
-              defaultValue={lead.status || "new"} 
-              onValueChange={(val) => updateStatusMutation.mutate(val)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="new">New Lead</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="tour_booked">Tour Booked</SelectItem>
-                <SelectItem value="tour_completed">Tour Completed</SelectItem>
-                <SelectItem value="enrolled">Enrolled</SelectItem>
-                <SelectItem value="lost">Lost</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select 
+                defaultValue={lead.status || "new"} 
+                onValueChange={(val) => updateStatusMutation.mutate(val)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New Lead</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="tour_booked">Tour Booked</SelectItem>
+                  <SelectItem value="tour_completed">Tour Completed</SelectItem>
+                  <SelectItem value="enrolled">Enrolled</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="destructive" 
+                size="icon"
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this lead? (Debug)")) {
+                    deleteLeadMutation.mutate();
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -341,4 +364,3 @@ export function LeadDetailDialog({
     </Dialog>
   );
 }
-

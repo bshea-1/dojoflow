@@ -1,225 +1,265 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { useMemo, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  MoreHorizontal, 
-  Mail, 
-  MessageSquare, 
-  Filter, 
-  Search 
+import { Badge } from "@/components/ui/badge";
+import {
+  Filter,
+  Mail,
+  MessageSquare,
+  MoreHorizontal,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Student {
+interface Member {
   id: string;
-  first_name: string;
-  program_interest: string;
-  current_belt: string | null;
-  guardians: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-  };
+  guardian_name: string;
+  student_name: string;
+  belt: string;
+  program: string;
+  status: string;
+  email: string;
+  phone: string;
 }
 
-export function MembersList({ students }: { students: any[] }) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [filterBelt, setFilterBelt] = useState<string | null>(null);
-  const [filterProgram, setFilterProgram] = useState<string | null>(null);
+interface MembersListProps {
+  initialMembers: Member[];
+}
+
+const BELT_OPTIONS = ["White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Red", "Black"];
+const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
+
+export function MembersList({ initialMembers }: MembersListProps) {
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [beltFilters, setBeltFilters] = useState<string[]>([]);
+  const [programFilters, setProgramFilters] = useState<string[]>([]);
 
-  // Filter Logic
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = 
-      student.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.guardians.last_name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesBelt = filterBelt ? student.current_belt === filterBelt : true;
-    const matchesProgram = filterProgram ? student.program_interest === filterProgram : true;
+  const filteredMembers = useMemo(() => {
+    return initialMembers.filter((member) => {
+      const matchesSearch =
+        member.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.guardian_name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesBelt =
+        beltFilters.length === 0 || beltFilters.includes(member.belt);
+      const matchesProgram =
+        programFilters.length === 0 || programFilters.includes(member.program);
 
-    return matchesSearch && matchesBelt && matchesProgram;
-  });
+      return matchesSearch && matchesBelt && matchesProgram;
+    });
+  }, [initialMembers, searchQuery, beltFilters, programFilters]);
 
-  // Selection Logic
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredStudents.length) {
-      setSelectedIds(new Set());
+    if (selectedMembers.length === filteredMembers.length) {
+      setSelectedMembers([]);
     } else {
-      setSelectedIds(new Set(filteredStudents.map(s => s.id)));
+      setSelectedMembers(filteredMembers.map((m) => m.id));
     }
   };
 
-  const toggleSelect = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
-    setSelectedIds(newSet);
+  const toggleSelectMember = (id: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]
+    );
   };
 
-  // Mock Actions
-  const handleBulkAction = (action: string) => {
-    toast.success(`${action} sent to ${selectedIds.size} members (Mock)`);
-    setSelectedIds(new Set());
+  const handleBulkAction = (action: "email" | "sms") => {
+    if (selectedMembers.length === 0) return;
+    toast.success(
+      `Mock: Sending ${action} to ${selectedMembers.length} members.`
+    );
+    setSelectedMembers([]);
+  };
+
+  const handleIndividualAction = (
+    memberName: string,
+    action: "email" | "sms"
+  ) => {
+    toast.success(`Mock: Sending ${action} to ${memberName}.`);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-1">
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search members..." 
-              className="pl-8" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-10 gap-1">
-                <Filter className="h-3.5 w-3.5" />
-                Filter
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() =>
+              setSelectedMembers(filteredMembers.map((member) => member.id))
+            }
+          >
+            Select All
+          </Button>
+          {selectedMembers.length > 0 && (
+            <>
+              <Button variant="outline" onClick={() => handleBulkAction("email")}>
+                <Mail className="mr-2 h-4 w-4" /> Email ({selectedMembers.length})
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuLabel>Filter by Program</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setFilterProgram(null)}>All Programs</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterProgram("jr")}>JR</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterProgram("create")}>Create</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filter by Belt</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setFilterBelt(null)}>All Belts</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterBelt("White")}>White</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterBelt("Yellow")}>Yellow</DropdownMenuItem>
-              {/* Add more belts as needed */}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {(filterBelt || filterProgram) && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => { setFilterBelt(null); setFilterProgram(null); }}
-              className="h-10 px-2 text-muted-foreground"
-            >
-              Reset
-            </Button>
+              <Button variant="outline" onClick={() => handleBulkAction("sms")}>
+                <MessageSquare className="mr-2 h-4 w-4" /> SMS ({selectedMembers.length})
+              </Button>
+            </>
           )}
         </div>
-
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5">
-            <span className="text-sm text-muted-foreground mr-2">
-              {selectedIds.size} selected
-            </span>
-            <Button size="sm" onClick={() => handleBulkAction("Email")}>
-              <Mail className="mr-2 h-4 w-4" /> Email
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => handleBulkAction("SMS")}>
-              <MessageSquare className="mr-2 h-4 w-4" /> SMS
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Table */}
+      <div className="flex flex-wrap gap-4">
+        <div className="relative flex-1 min-w-[240px] max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search members or guardians..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Belt {beltFilters.length > 0 && `(${beltFilters.length})`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {BELT_OPTIONS.map((belt) => (
+              <DropdownMenuCheckboxItem
+                key={belt}
+                checked={beltFilters.includes(belt)}
+                onCheckedChange={(checked) =>
+                  setBeltFilters((prev) =>
+                    checked ? [...prev, belt] : prev.filter((b) => b !== belt)
+                  )
+                }
+              >
+                {belt}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Program {programFilters.length > 0 && `(${programFilters.length})`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {PROGRAM_OPTIONS.map((program) => (
+              <DropdownMenuCheckboxItem
+                key={program}
+                checked={programFilters.includes(program)}
+                onCheckedChange={(checked) =>
+                  setProgramFilters((prev) =>
+                    checked
+                      ? [...prev, program]
+                      : prev.filter((p) => p !== program)
+                  )
+                }
+              >
+                {program}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <Checkbox 
-                  checked={selectedIds.size === filteredStudents.length && filteredStudents.length > 0}
-                  onCheckedChange={toggleSelectAll}
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300"
+                  checked={
+                    filteredMembers.length > 0 &&
+                    selectedMembers.length === filteredMembers.length
+                  }
+                  onChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Program</TableHead>
-              <TableHead>Belt</TableHead>
               <TableHead>Guardian</TableHead>
+              <TableHead>Student</TableHead>
+              <TableHead>Belt</TableHead>
+              <TableHead>Program</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow key={student.id} data-state={selectedIds.has(student.id) ? "selected" : undefined}>
+            {filteredMembers.map((member) => (
+              <TableRow key={member.id}>
                 <TableCell>
-                  <Checkbox 
-                    checked={selectedIds.has(student.id)}
-                    onCheckedChange={() => toggleSelect(student.id)}
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={selectedMembers.includes(member.id)}
+                    onChange={() => toggleSelectMember(member.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{student.first_name}</TableCell>
-                <TableCell className="capitalize">{student.program_interest}</TableCell>
+                <TableCell className="font-medium">{member.guardian_name}</TableCell>
+                <TableCell>{member.student_name}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={
-                    student.current_belt === "White" ? "bg-slate-100" :
-                    student.current_belt === "Yellow" ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
-                    "bg-slate-100"
-                  }>
-                    {student.current_belt || "White"}
-                  </Badge>
+                  <Badge variant="secondary">{member.belt}</Badge>
                 </TableCell>
+                <TableCell className="capitalize">{member.program}</TableCell>
                 <TableCell>
-                  <div className="flex flex-col">
-                    <span className="text-sm">{student.guardians.first_name} {student.guardians.last_name}</span>
-                    <span className="text-xs text-muted-foreground">{student.guardians.email}</span>
-                  </div>
+                  <Badge variant={member.status === "Active" ? "default" : "outline"}>
+                    {member.status}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                      <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => toast.success(`Email sent to ${student.guardians.email} (Mock)`)}>
+                      <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => handleIndividualAction(member.guardian_name, "email")}
+                      >
                         Email Guardian
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => toast.success(`SMS sent to ${student.guardians.phone} (Mock)`)}>
+                      <DropdownMenuItem
+                        onClick={() => handleIndividualAction(member.guardian_name, "sms")}
+                      >
                         SMS Guardian
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>View Profile</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
-            {filteredStudents.length === 0 && (
+            {filteredMembers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  No members found.
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  No members match your filters.
                 </TableCell>
               </TableRow>
             )}
@@ -229,4 +269,3 @@ export function MembersList({ students }: { students: any[] }) {
     </div>
   );
 }
-

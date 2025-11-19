@@ -112,7 +112,7 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                     ))}
                     {slotTours.length === 0 && onSlotSelect && (
                       <span className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">
-                        Tap to schedule
+                        {/* Tap to schedule removed */}
                       </span>
                     )}
                   </div>
