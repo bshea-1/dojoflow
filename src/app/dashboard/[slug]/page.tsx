@@ -26,9 +26,18 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   // Fetch Data for Stats
   const [leadsRes, tasksRes, toursRes] = await Promise.all([
-    supabase.from("leads").select("id, status, created_at, updated_at"),
-    supabase.from("tasks").select("status, due_date, type"),
-    supabase.from("tours").select("lead_id, status, scheduled_at, updated_at"),
+    supabase
+      .from("leads")
+      .select("id, status, created_at, updated_at")
+      .eq("franchise_id", franchise.id),
+    supabase
+      .from("tasks")
+      .select("status, due_date, type")
+      .eq("franchise_id", franchise.id),
+    supabase
+      .from("tours")
+      .select("lead_id, status, scheduled_at, updated_at")
+      .eq("franchise_id", franchise.id),
   ]);
 
   const leads = leadsRes.data || [];
