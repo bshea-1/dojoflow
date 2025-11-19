@@ -100,7 +100,7 @@ function SemiCircleGauge({
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-full h-[150px] flex items-end justify-center overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           <ResponsiveContainer width="100%" height="200%">
             <RadialBarChart
               cx="50%"
@@ -128,7 +128,8 @@ function SemiCircleGauge({
           </ResponsiveContainer>
         </div>
 
-        <ResponsiveContainer width="100%" height="200%">
+        <div className="relative z-10 w-full h-full">
+          <ResponsiveContainer width="100%" height="200%">
           <RadialBarChart
             cx="50%"
             cy="50%"
@@ -152,7 +153,8 @@ function SemiCircleGauge({
               cornerRadius={10}
             />
           </RadialBarChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
         <div className="absolute bottom-0 mb-4 text-center">
           <div className="text-3xl font-bold" style={{ color: displayColor }}>
             {value}%
