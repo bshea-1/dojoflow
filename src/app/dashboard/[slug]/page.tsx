@@ -1,9 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
-import { differenceInHours, differenceInMonths, isPast } from "date-fns";
+import { DashboardRangePicker } from "@/components/dashboard/range-picker";
+import { differenceInHours, differenceInMonths, isPast, subDays } from "date-fns";
 
-export default async function DashboardOverview({ params }: { params: { slug: string } }) {
+const RANGE_LABELS = {
+  "7d": "Last 7 Days",
+  "31d": "Last 31 Days",
+  lifetime: "Lifetime",
+} as const;
+
+type RangeKey = keyof typeof RANGE_LABELS;
+
+export default async function DashboardOverview({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: { range?: string };
+}) {
   const supabase = createClient();
+
+  const urlRange = searchParams?.range;
+  const range: RangeKey =
+    urlRange === "31d" || urlRange === "lifetime" ? urlRange : "7d";
+  const rangeDays = range === "lifetime" ? null : range === "31d" ? 31 : 7;
+  const sinceDate = rangeDays ? subDays(new Date(), rangeDays) : null;
+  const sinceIso = sinceDate?.toISOString();
 
   // Get Current User & Profile
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,19 +47,34 @@ export default async function DashboardOverview({ params }: { params: { slug: st
   if (!franchise) return <div>Franchise not found</div>;
 
   // Fetch Data for Stats
+  let leadsQuery = supabase
+    .from("leads")
+    .select("id, status, created_at, updated_at")
+    .eq("franchise_id", franchise.id);
+  if (sinceIso) {
+    leadsQuery = leadsQuery.gte("created_at", sinceIso);
+  }
+
+  let tasksQuery = supabase
+    .from("tasks")
+    .select("status, due_date, type, updated_at")
+    .eq("franchise_id", franchise.id);
+  if (sinceIso) {
+    tasksQuery = tasksQuery.gte("updated_at", sinceIso);
+  }
+
+  let toursQuery = supabase
+    .from("tours")
+    .select("lead_id, status, scheduled_at, updated_at")
+    .eq("franchise_id", franchise.id);
+  if (sinceIso) {
+    toursQuery = toursQuery.gte("scheduled_at", sinceIso);
+  }
+
   const [leadsRes, tasksRes, toursRes] = await Promise.all([
-    supabase
-      .from("leads")
-      .select("id, status, created_at, updated_at")
-      .eq("franchise_id", franchise.id),
-    supabase
-      .from("tasks")
-      .select("status, due_date, type")
-      .eq("franchise_id", franchise.id),
-    supabase
-      .from("tours")
-      .select("lead_id, status, scheduled_at, updated_at")
-      .eq("franchise_id", franchise.id),
+    leadsQuery,
+    tasksQuery,
+    toursQuery,
   ]);
 
   const leads = leadsRes.data || [];
@@ -188,7 +225,15 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   return (
     <div className="space-y-6">
-      <DashboardStats stats={stats} userName={franchise.name} showLtv={showLtv} />
+      <div className="flex justify-end">
+        <DashboardRangePicker currentRange={range} />
+      </div>
+      <DashboardStats
+        stats={stats}
+        userName={franchise.name}
+        showLtv={showLtv}
+        rangeLabel={RANGE_LABELS[range]}
+      />
     </div>
   );
 }

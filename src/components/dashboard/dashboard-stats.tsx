@@ -61,6 +61,7 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
 interface DashboardStatsProps {
   userName?: string;
   showLtv?: boolean;
+  rangeLabel: string;
   stats: {
     totalLifetimeValue: number;
     quickStats: {
@@ -174,7 +175,7 @@ function SemiCircleGauge({
   );
 }
 
-export function DashboardStats({ stats, userName, showLtv = false }: DashboardStatsProps) {
+export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }: DashboardStatsProps) {
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -193,7 +194,7 @@ export function DashboardStats({ stats, userName, showLtv = false }: DashboardSt
             </h1>
           </div>
           <div className="text-right text-sm text-muted-foreground">
-            <p className="font-medium text-slate-600">Last 7 Days</p>
+            <p className="font-medium text-slate-600">{rangeLabel}</p>
             <p className="text-xs">Updated {new Date().toLocaleDateString()}</p>
           </div>
         </div>
