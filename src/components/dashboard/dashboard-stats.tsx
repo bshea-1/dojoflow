@@ -16,6 +16,18 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
 
+type GaugeDirection = "good-high" | "good-low";
+
+const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") => {
+  const clamped = Math.max(0, Math.min(100, value));
+  const normalized = direction === "good-high" ? clamped : 100 - clamped;
+
+  if (normalized >= 75) return "#22c55e"; // green
+  if (normalized >= 50) return "#84cc16"; // lime
+  if (normalized >= 25) return "#facc15"; // yellow
+  return "#f97316"; // orange/red
+};
+
 interface DashboardStatsProps {
   userName?: string;
   stats: {
@@ -24,9 +36,6 @@ interface DashboardStatsProps {
       fastToursPercent: number;
       overdueTasksPercent: number;
       waitlistPercent: number;
-      fastToursNote?: string;
-      overdueTasksNote?: string;
-      waitlistNote?: string;
     };
     childrenByStatus: { name: string; value: number }[];
     conversionStats: {
@@ -34,10 +43,6 @@ interface DashboardStatsProps {
       newToTourCompletedPercent: number;
       scheduledToCompletedPercent: number;
       registeredAfterTourPercent: number;
-      newToTourScheduledNote?: string;
-      newToTourCompletedNote?: string;
-      scheduledToCompletedNote?: string;
-      registeredAfterTourNote?: string;
     };
     pastDueChartData: { name: string; value: number }[];
     completedChartData: { name: string; value: number }[];
@@ -46,18 +51,18 @@ interface DashboardStatsProps {
 
 function SemiCircleGauge({
   value,
-  color,
   label,
   subLabel,
+  direction = "good-high",
 }: {
   value: number;
-  color: string;
   label: string;
   subLabel?: string;
+  direction?: GaugeDirection;
 }) {
   const isZero = value === 0;
-  const displayValue = isZero ? 2 : value;
-  const displayColor = isZero ? "#ef4444" : color;
+  const displayValue = isZero ? 2 : value; 
+  const displayColor = getGaugeColor(value, direction);
 
   const data = [
     { name: "metric", track: 100, value: displayValue },
@@ -85,7 +90,6 @@ function SemiCircleGauge({
             />
             <RadialBar
               dataKey="track"
-              background={{ fill: "#d7dce3" }}
               fill="#d7dce3"
               isAnimationActive={false}
               cornerRadius={12}
@@ -170,21 +174,18 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <SemiCircleGauge 
               value={stats.quickStats.fastToursPercent} 
-              color="#e5e7eb" 
               label="Families Completing Tours Within 24 Hours"
-              subLabel={stats.quickStats.fastToursNote}
+              direction="good-high"
             />
              <SemiCircleGauge 
               value={stats.quickStats.overdueTasksPercent} 
-              color="#f97316" 
               label="Tasks That Are Past Due"
-              subLabel={stats.quickStats.overdueTasksNote}
+              direction="good-low"
             />
              <SemiCircleGauge 
               value={stats.quickStats.waitlistPercent} 
-              color="#eab308" 
               label="New Families Getting To Wait List or Registered"
-              subLabel={stats.quickStats.waitlistNote}
+              direction="good-high"
             />
           </div>
         </CardContent>
@@ -249,27 +250,23 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
              <div className="grid grid-cols-2 gap-6">
                 <SemiCircleGauge 
                   value={stats.conversionStats.newToTourScheduledPercent} 
-                  color="#84cc16" 
                   label="New Families Getting to Tour Scheduled"
-                  subLabel={stats.conversionStats.newToTourScheduledNote}
+                  direction="good-high"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.newToTourCompletedPercent} 
-                  color="#e5e7eb" 
                   label="New Families Getting To Tour Completed"
-                  subLabel={stats.conversionStats.newToTourCompletedNote}
+                  direction="good-high"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.scheduledToCompletedPercent} 
-                  color="#f97316" 
                   label="Scheduled Tours Getting Completed"
-                  subLabel={stats.conversionStats.scheduledToCompletedNote}
+                  direction="good-high"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.registeredAfterTourPercent} 
-                  color="#f97316" 
                   label="Children Registered After Tour Completion"
-                  subLabel={stats.conversionStats.registeredAfterTourNote}
+                  direction="good-high"
                 />
              </div>
           </CardContent>

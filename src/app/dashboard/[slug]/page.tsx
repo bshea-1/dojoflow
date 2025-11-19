@@ -83,7 +83,6 @@ export default async function DashboardOverview({ params }: { params: { slug: st
     { name: "Engaged", value: statusCounts.contacted },
     { name: "Tour Scheduled", value: statusCounts.tour_booked },
     { name: "Tour Completed", value: statusCounts.tour_completed },
-    { name: "Registered", value: statusCounts.enrolled },
     { name: "Enrolled", value: statusCounts.enrolled }
   ];
 
