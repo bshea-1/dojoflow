@@ -95,6 +95,21 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     if (guardianError) {
       return { error: "Failed to create guardian record" };
     }
+    
+    // Create student for new lead
+    const { error: studentError } = await supabase
+      .from("students")
+      .insert({
+        guardian_id: (await supabase.from("guardians").select("id").eq("lead_id", insertedLead.id).single()).data?.id!,
+        first_name: data.newLead.children[0]?.name || "Student",
+        dob: "1970-01-01", // Default DOB
+        program_interest: data.newLead.programs
+      });
+
+     if (studentError) {
+       // Non-critical, but good to log
+       console.error("Failed to create student for tour booking:", studentError);
+     }
 
     leadId = insertedLead.id;
   }
@@ -118,14 +133,35 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   }
 
   // 4. Update Lead Status
-  await supabase
+  const { error: updateError } = await supabase
     .from("leads")
     .update({ status: "tour_booked" })
     .eq("id", leadId);
+
+  if (updateError) {
+      return { error: "Tour booked but failed to update lead status." };
+  }
+
+  // 5. Create Task
+  const { error: taskError } = await supabase
+    .from("tasks")
+    .insert({
+      franchise_id: franchise.id,
+      lead_id: leadId,
+      title: "Tour Scheduled",
+      description: `Tour scheduled for ${scheduledDate.toLocaleDateString()} at ${scheduledDate.toLocaleTimeString()}`,
+      due_date: scheduledDate.toISOString(),
+      type: "other",
+      status: "pending"
+    });
+    
+  if (taskError) {
+      console.error("Failed to create task for tour:", taskError);
+      // Don't return error here as the primary action (booking tour) succeeded
+  }
 
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   
   return { success: true };
 }
-
