@@ -77,7 +77,7 @@ export function LeadDetailDialog({
 
   // Mutations
   const updateStatusMutation = useMutation({
-    mutationFn: (status: string) => updateLeadStatus(lead.id, status as any),
+    mutationFn: (status: string) => updateLeadStatus(lead.id, status as any, franchiseSlug),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads", franchiseSlug] });
       toast.success("Lead status updated");

@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
 
-export async function updateLeadStatus(leadId: string, newStatus: LeadStatus) {
+export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, franchiseSlug: string) {
   const supabase = createClient();
 
   const { error } = await supabase
@@ -19,6 +19,7 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus) {
     throw new Error(error.message);
   }
 
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
 }
 
@@ -114,8 +115,8 @@ type LeadEditPayload = {
     phone: string;
   };
   student?: {
-    firstName?: string;
-    programInterest?: string;
+    firstName: string;
+    programInterest: any; // Use any to avoid strict typing issues with specific enum import here
     dob?: string;
   };
   lead?: {
