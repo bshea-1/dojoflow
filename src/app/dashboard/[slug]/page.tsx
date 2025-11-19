@@ -33,7 +33,7 @@ export default async function DashboardOverview({
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", user?.id || "")
     .single();
 
@@ -232,7 +232,7 @@ export default async function DashboardOverview({
       </div>
       <DashboardStats
         stats={stats}
-        userName={franchise.name}
+        userName={profile?.full_name || "Sensei"}
         showLtv={showLtv}
         rangeLabel={RANGE_LABELS[range]}
       />
