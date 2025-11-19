@@ -85,10 +85,16 @@ export default async function DashboardOverview({
   // Calculation: For every lead that is NOT Enrolled and NOT Lost,
   // Calculate months since created_at (minimum 1 month).
   // Sum (months * $249).
+  // Lifetime value always evaluates lifetime (ignoring range filtering)
   let totalLifetimeValue = 0;
   const now = new Date();
   
-  leads.forEach(lead => {
+  const lifetimeLeadsRes = await supabase
+    .from("leads")
+    .select("status, created_at")
+    .eq("franchise_id", franchise.id);
+
+  (lifetimeLeadsRes.data || []).forEach(lead => {
     if (lead.status !== "enrolled" && lead.status !== "lost") {
       const createdAt = new Date(lead.created_at);
       // Determine months in pipeline.
