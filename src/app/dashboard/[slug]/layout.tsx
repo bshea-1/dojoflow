@@ -15,12 +15,43 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // In a real app, we would verify here if the user actually belongs to params.slug
-  // optimizing by trusting middleware for now but double checking is good practice.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = profile?.role || "sensei";
+  let assignedFranchises: { name: string; slug: string }[] = [];
+
+  if (userRole === "franchisee") {
+    const { data } = await supabase
+      .from("franchise_assignments")
+      .select("franchises(name, slug)")
+      .eq("profile_id", user.id);
+    
+    if (data) {
+      assignedFranchises = data.map((item: any) => ({
+        name: item.franchises.name,
+        slug: item.franchises.slug,
+      }));
+    }
+  } else {
+    // For non-franchisees, they just have one location implicitly via profile or assignments
+    // We can fetch it just to display the name correctly if needed, but for now simpler logic
+    const { data: franchise } = await supabase.from("franchises").select("name, slug").eq("slug", params.slug).single();
+    if (franchise) {
+      assignedFranchises = [franchise];
+    }
+  }
   
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar franchiseSlug={params.slug} />
+      <Sidebar 
+        franchiseSlug={params.slug} 
+        userRole={userRole}
+        assignedFranchises={assignedFranchises}
+      />
       
       <div className="md:pl-64 transition-all duration-200">
         <header className="flex h-16 items-center gap-4 border-b bg-background px-6">
@@ -36,4 +67,3 @@ export default async function DashboardLayout({
     </div>
   );
 }
-

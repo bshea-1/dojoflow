@@ -64,6 +64,26 @@ export interface Database {
           updated_at?: string
         }
       }
+      franchise_assignments: {
+        Row: {
+          id: string
+          profile_id: string
+          franchise_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          franchise_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          franchise_id?: string
+          created_at?: string
+        }
+      }
       leads: {
         Row: {
           id: string

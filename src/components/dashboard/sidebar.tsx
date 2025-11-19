@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/store/ui-store";
 import { 
@@ -13,17 +13,29 @@ import {
   Menu,
   LogOut,
   UserCheck,
-  CheckSquare
+  CheckSquare,
+  MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/actions/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SidebarProps {
   franchiseSlug: string;
+  userRole?: string;
+  assignedFranchises?: { name: string; slug: string }[];
 }
 
-export function Sidebar({ franchiseSlug }: SidebarProps) {
+export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useUIStore();
 
   const links = [
@@ -34,6 +46,9 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
     { href: `/dashboard/${franchiseSlug}/members`, label: "Members", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
+
+  // Find current franchise name
+  const currentFranchiseName = assignedFranchises.find(f => f.slug === franchiseSlug)?.name || "Select Location";
 
   return (
     <>
@@ -69,7 +84,31 @@ export function Sidebar({ franchiseSlug }: SidebarProps) {
           })}
         </nav>
         
-        <div className="p-4 border-t">
+        <div className="p-4 border-t space-y-2">
+          {userRole === "franchisee" && assignedFranchises.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-start gap-3 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span className="truncate">{currentFranchiseName}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="start">
+                <DropdownMenuLabel>Switch Location</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {assignedFranchises.map((franchise) => (
+                  <DropdownMenuItem 
+                    key={franchise.slug}
+                    onClick={() => router.push(`/dashboard/${franchise.slug}`)}
+                    className={cn(franchise.slug === franchiseSlug && "bg-accent")}
+                  >
+                    {franchise.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <form action={logout}>
             <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
               <LogOut className="h-4 w-4" />
