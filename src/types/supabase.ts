@@ -151,7 +151,7 @@ export interface Database {
           guardian_id: string
           first_name: string
           dob: string
-          program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party'
+          program_interest: ('jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party' | 'pno' | 'academy')[]
           current_belt: string | null
           last_promotion_date: string | null
           created_at: string
@@ -162,7 +162,7 @@ export interface Database {
           guardian_id: string
           first_name: string
           dob: string
-          program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party'
+          program_interest: ('jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party' | 'pno' | 'academy')[]
           current_belt?: string | null
           last_promotion_date?: string | null
           created_at?: string
@@ -173,7 +173,7 @@ export interface Database {
           guardian_id?: string
           first_name?: string
           dob?: string
-          program_interest?: 'jr' | 'create' | 'camp'
+          program_interest?: ('jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party' | 'pno' | 'academy')[]
           current_belt?: string | null
           last_promotion_date?: string | null
           created_at?: string
@@ -284,7 +284,7 @@ export interface Database {
       }
     }
     Enums: {
-      program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party'
+      program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party' | 'pno' | 'academy'
       app_role: 'franchisee' | 'center_director' | 'sensei'
     }
   }

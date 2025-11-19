@@ -20,15 +20,17 @@ export const newLeadSchema = z.object({
   student: z.object({
     firstName: z.string().min(1, "Student name is required"),
     dob: z.coerce.date(),
-    programInterest: z.enum([
+    programInterest: z.array(z.enum([
       "jr", 
       "create", 
       "camp", 
       "ai", 
       "robotics", 
       "clubs", 
-      "birthday_party"
-    ]),
+      "birthday_party",
+      "pno",
+      "academy"
+    ])).min(1, "Select at least one program"),
   }),
 
   // Lead Meta

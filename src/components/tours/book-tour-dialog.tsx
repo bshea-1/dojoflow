@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   bookTourSchema,
@@ -41,6 +40,7 @@ import {
   ProgramInterestValue,
 } from "@/lib/schemas/book-tour";
 import { bookTour } from "@/app/dashboard/[slug]/tours/actions";
+import { MultiSelectDropdown } from "@/components/ui/multi-select-dropdown";
 
 interface LeadOption {
   id: string;
@@ -309,29 +309,15 @@ export function BookTourDialog({
                   name="newLead.programs"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Program Interests</FormLabel>
-                      <div className="grid grid-cols-2 gap-2">
-                        {programLeadOptions.map((program) => (
-                          <label
-                            key={program.value}
-                            className="flex items-center gap-2 rounded-md border p-2 text-sm"
-                          >
-                            <Checkbox
-                              checked={field.value?.includes(program.value) ?? false}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange([...(field.value ?? []), program.value]);
-                                } else {
-                                  field.onChange(
-                                    (field.value ?? []).filter((p) => p !== program.value)
-                                  );
-                                }
-                              }}
-                            />
-                            {program.label}
-                          </label>
-                        ))}
-                      </div>
+                      <FormLabel>Lead Path</FormLabel>
+                      <FormControl>
+                        <MultiSelectDropdown
+                          options={programLeadOptions}
+                          selected={field.value ?? []}
+                          onChange={(val) => field.onChange(val)}
+                          placeholder="Select lead path..."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

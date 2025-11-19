@@ -459,7 +459,9 @@ export function LeadDetailDialog({
                     guardianPhone: guardian.phone || "",
                     studentFirstName: guardian.students?.[0]?.first_name || "",
                     studentProgram: (
-                      (guardian.students?.[0]?.program_interest || "jr") as EditLeadSchema["studentProgram"]
+                      (Array.isArray(guardian.students?.[0]?.program_interest)
+                        ? guardian.students?.[0]?.program_interest
+                        : ["jr"]) as EditLeadSchema["studentProgram"]
                     ),
                     studentDob: guardian.students?.[0]?.dob
                       ? guardian.students?.[0]?.dob.split("T")[0]

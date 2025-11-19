@@ -25,17 +25,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { MultiSelectDropdown } from "@/components/ui/multi-select-dropdown";
 
 import { newLeadSchema, NewLeadSchema } from "@/lib/schemas/new-lead";
 import { createLead } from "@/app/dashboard/[slug]/pipeline/actions";
+import { programLeadOptions } from "@/lib/schemas/book-tour";
 
 interface NewLeadDialogProps {
   franchiseSlug: string;
@@ -54,7 +49,7 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
       },
       student: {
         firstName: "",
-        programInterest: "jr", // default
+        programInterest: ["jr"], // default
         // dob is managed by date input
       },
       source: "",
@@ -206,23 +201,15 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
                   name="student.programInterest"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Program Interest</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a program" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="jr">JR</SelectItem>
-                          <SelectItem value="create">Create</SelectItem>
-                          <SelectItem value="camp">Camps</SelectItem>
-                          <SelectItem value="ai">AI</SelectItem>
-                          <SelectItem value="robotics">Robotics</SelectItem>
-                          <SelectItem value="clubs">Clubs</SelectItem>
-                          <SelectItem value="birthday_party">Birthday Party</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Lead Path</FormLabel>
+                      <FormControl>
+                        <MultiSelectDropdown
+                          options={programLeadOptions}
+                          selected={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select programs..."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

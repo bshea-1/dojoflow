@@ -10,7 +10,7 @@ export type Member = {
   guardianFirstName: string;
   guardianLastName: string;
   studentName: string;
-  program: string;
+  program: string[];
   status: string;
   email: string;
   phone: string;
@@ -69,7 +69,7 @@ export async function getMembers(franchiseSlug: string): Promise<Member[]> {
           guardianFirstName: guardian.first_name,
           guardianLastName: guardian.last_name,
           studentName: student.first_name,
-          program: student.program_interest,
+          program: Array.isArray(student.program_interest) ? student.program_interest : [],
           status: lead.status || "active",
           email: guardian.email,
           phone: guardian.phone,
@@ -82,4 +82,3 @@ export async function getMembers(franchiseSlug: string): Promise<Member[]> {
 
   return members;
 }
-

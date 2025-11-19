@@ -7,7 +7,9 @@ const programValues = [
   "ai", 
   "robotics", 
   "clubs", 
-  "birthday_party"
+  "birthday_party",
+  "pno",
+  "academy"
 ] as const;
 
 export type ProgramInterestValue = typeof programValues[number];
@@ -20,6 +22,8 @@ export const programLeadOptions = [
   { value: "robotics", label: "Robotics" },
   { value: "clubs", label: "Clubs" },
   { value: "birthday_party", label: "Birthday Party" },
+  { value: "pno", label: "PNO" },
+  { value: "academy", label: "Academy" },
 ] as const;
 
 const childSchema = z.object({

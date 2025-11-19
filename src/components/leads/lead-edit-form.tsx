@@ -3,21 +3,16 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { editLeadSchema, EditLeadSchema, programOptions } from "@/lib/schemas/edit-lead";
+import { editLeadSchema, EditLeadSchema } from "@/lib/schemas/edit-lead";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateLeadDetails } from "@/app/dashboard/[slug]/pipeline/actions";
 import { toast } from "sonner";
+import { MultiSelectDropdown } from "@/components/ui/multi-select-dropdown";
+import { programLeadOptions } from "@/lib/schemas/book-tour";
 
 interface LeadEditFormProps {
   franchiseSlug: string;
@@ -152,28 +147,14 @@ export function LeadEditForm({
             )}
           </div>
           <div>
-            <Label htmlFor="studentProgram">Program Interest</Label>
-            <Select
-              onValueChange={(val) =>
-                form.setValue(
-                  "studentProgram",
-                  val as EditLeadSchema["studentProgram"]
-                )
-              }
-              value={form.watch("studentProgram")}
+            <Label htmlFor="studentProgram">Lead Path</Label>
+            <MultiSelectDropdown
+              options={programLeadOptions}
+              selected={form.watch("studentProgram")}
+              onChange={(val) => form.setValue("studentProgram", val as any)}
               disabled={isReadOnly}
-            >
-              <SelectTrigger id="studentProgram">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {programOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option.replace("_", " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select programs..."
+            />
             {form.formState.errors.studentProgram && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.studentProgram.message}

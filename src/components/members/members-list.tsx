@@ -38,14 +38,13 @@ import {
 import { LeadEditForm } from "@/components/leads/lead-edit-form";
 import { EditLeadSchema } from "@/lib/schemas/edit-lead";
 import type { Member as MemberType } from "@/app/dashboard/[slug]/members/actions";
+import { programLeadOptions } from "@/lib/schemas/book-tour";
 
 interface MembersListProps {
   initialMembers: MemberType[];
   franchiseSlug: string;
   isReadOnly?: boolean;
 }
-
-const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
 
 const formatStatus = (status?: string | null) =>
   status ? status.replace(/_/g, " ") : "Active";
@@ -62,12 +61,14 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
 
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
-      const memberProgram = member.program || "";
       const matchesSearch =
         member.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         `${member.guardianFirstName} ${member.guardianLastName}`.toLowerCase().includes(searchQuery.toLowerCase());
+      
       const matchesProgram =
-        programFilters.length === 0 || programFilters.includes(memberProgram);
+        programFilters.length === 0 ||
+        (Array.isArray(member.program) &&
+          member.program.some((p) => programFilters.includes(p)));
 
       return matchesSearch && matchesProgram;
     });
@@ -168,19 +169,19 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {PROGRAM_OPTIONS.map((program) => (
+            {programLeadOptions.map((program) => (
               <DropdownMenuCheckboxItem
-                key={program}
-                checked={programFilters.includes(program)}
+                key={program.value}
+                checked={programFilters.includes(program.value)}
                 onCheckedChange={(checked) =>
                   setProgramFilters((prev) =>
                     checked
-                      ? [...prev, program]
-                      : prev.filter((p) => p !== program)
+                      ? [...prev, program.value]
+                      : prev.filter((p) => p !== program.value)
                   )
                 }
               >
-                {program}
+                {program.label}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -204,7 +205,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
               </TableHead>
               <TableHead>Guardian</TableHead>
               <TableHead>Student</TableHead>
-              <TableHead>Program</TableHead>
+              <TableHead>Lead Path</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -225,7 +226,11 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                   {member.guardianFirstName} {member.guardianLastName}
                 </TableCell>
                 <TableCell>{member.studentName}</TableCell>
-                <TableCell className="capitalize">{member.program || "N/A"}</TableCell>
+                <TableCell className="capitalize">
+                  {member.program.map(p => 
+                    programLeadOptions.find(opt => opt.value === p)?.label || p
+                  ).join(", ") || "N/A"}
+                </TableCell>
                 <TableCell>
                   <Badge variant={member.status === "enrolled" ? "default" : "outline"}>
                     {formatStatus(member.status)}
@@ -297,7 +302,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                 guardianEmail: editingMember.email || "",
                 guardianPhone: editingMember.phone || "",
                 studentFirstName: editingMember.studentName || "",
-                studentProgram: (editingMember.program || "jr") as EditLeadSchema["studentProgram"],
+                studentProgram: (editingMember.program || ["jr"]) as EditLeadSchema["studentProgram"],
                 source: editingMember.source || "",
                 notes: editingMember.notes || "",
               }}
