@@ -48,9 +48,10 @@ type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
 interface ActionListProps {
   franchiseSlug: string;
   initialTasks: Task[];
+  isReadOnly?: boolean;
 }
 
-export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
+export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: ActionListProps) {
   const queryClient = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
@@ -162,17 +163,19 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
                 )}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteTaskMutation.mutate(task.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isReadOnly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteTaskMutation.mutate(task.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ))}
       </div>
@@ -182,58 +185,60 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
   return (
     <div className="space-y-6">
       {/* Quick Add */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-medium">Quick Add Task</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Select 
-              value={newTaskType} 
-              onValueChange={(v: any) => setNewTaskType(v)}
-            >
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="call">Call</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="text">Text</SelectItem>
-                <SelectItem value="review">Review</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input 
-              placeholder="What needs to be done?" 
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="flex-1"
-            />
-            <Input 
-              type="date" 
-              className="w-full sm:w-auto"
-              value={newTaskDate}
-              onChange={(e) => setNewTaskDate(e.target.value)}
-            />
-            <Button 
-              onClick={() => createTaskMutation.mutate()}
-              disabled={!newTaskTitle || createTaskMutation.isPending}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add
-            </Button>
-          </div>
-          <div className="flex gap-4 mt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
-              <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+      {!isReadOnly && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-medium">Quick Add Task</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select 
+                value={newTaskType} 
+                onValueChange={(v: any) => setNewTaskType(v)}
+              >
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="call">Call</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input 
+                placeholder="What needs to be done?" 
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                className="flex-1"
+              />
+              <Input 
+                type="date" 
+                className="w-full sm:w-auto"
+                value={newTaskDate}
+                onChange={(e) => setNewTaskDate(e.target.value)}
+              />
+              <Button 
+                onClick={() => createTaskMutation.mutate()}
+                disabled={!newTaskTitle || createTaskMutation.isPending}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add
+              </Button>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
-              <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+            <div className="flex gap-4 mt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
+                <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
+                <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="today" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -302,6 +307,7 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
           onSaveAndAdd={() => setSelectedTask(null)}
+          isReadOnly={isReadOnly}
         />
       )}
     </div>

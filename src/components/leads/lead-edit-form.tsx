@@ -26,6 +26,7 @@ interface LeadEditFormProps {
   studentId?: string;
   initialValues: EditLeadSchema;
   onSaved?: (values: EditLeadSchema) => void;
+  isReadOnly?: boolean;
 }
 
 export function LeadEditForm({
@@ -35,6 +36,7 @@ export function LeadEditForm({
   studentId,
   initialValues,
   onSaved,
+  isReadOnly = false,
 }: LeadEditFormProps) {
   const queryClient = useQueryClient();
 
@@ -100,7 +102,7 @@ export function LeadEditForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
           <div>
             <Label htmlFor="guardianFirstName">First Name</Label>
-            <Input id="guardianFirstName" {...form.register("guardianFirstName")} />
+            <Input id="guardianFirstName" {...form.register("guardianFirstName")} disabled={isReadOnly} />
             {form.formState.errors.guardianFirstName && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.guardianFirstName.message}
@@ -109,7 +111,7 @@ export function LeadEditForm({
           </div>
           <div>
             <Label htmlFor="guardianLastName">Last Name</Label>
-            <Input id="guardianLastName" {...form.register("guardianLastName")} />
+            <Input id="guardianLastName" {...form.register("guardianLastName")} disabled={isReadOnly} />
             {form.formState.errors.guardianLastName && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.guardianLastName.message}
@@ -118,7 +120,7 @@ export function LeadEditForm({
           </div>
           <div>
             <Label htmlFor="guardianEmail">Email</Label>
-            <Input id="guardianEmail" type="email" {...form.register("guardianEmail")} />
+            <Input id="guardianEmail" type="email" {...form.register("guardianEmail")} disabled={isReadOnly} />
             {form.formState.errors.guardianEmail && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.guardianEmail.message}
@@ -127,7 +129,7 @@ export function LeadEditForm({
           </div>
           <div>
             <Label htmlFor="guardianPhone">Phone</Label>
-            <Input id="guardianPhone" {...form.register("guardianPhone")} />
+            <Input id="guardianPhone" {...form.register("guardianPhone")} disabled={isReadOnly} />
             {form.formState.errors.guardianPhone && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.guardianPhone.message}
@@ -142,7 +144,7 @@ export function LeadEditForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
           <div>
             <Label htmlFor="studentFirstName">Student Name</Label>
-            <Input id="studentFirstName" {...form.register("studentFirstName")} />
+            <Input id="studentFirstName" {...form.register("studentFirstName")} disabled={isReadOnly} />
             {form.formState.errors.studentFirstName && (
               <p className="text-xs text-destructive mt-1">
                 {form.formState.errors.studentFirstName.message}
@@ -159,6 +161,7 @@ export function LeadEditForm({
                 )
               }
               value={form.watch("studentProgram")}
+              disabled={isReadOnly}
             >
               <SelectTrigger id="studentProgram">
                 <SelectValue />
@@ -179,7 +182,7 @@ export function LeadEditForm({
           </div>
           <div>
             <Label htmlFor="studentDob">Date of Birth</Label>
-            <Input id="studentDob" type="date" {...form.register("studentDob")} />
+            <Input id="studentDob" type="date" {...form.register("studentDob")} disabled={isReadOnly} />
           </div>
         </div>
       </div>
@@ -189,21 +192,22 @@ export function LeadEditForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
           <div>
             <Label htmlFor="source">Source</Label>
-            <Input id="source" placeholder="Facebook, Walk-in..." {...form.register("source")} />
+            <Input id="source" placeholder="Facebook, Walk-in..." {...form.register("source")} disabled={isReadOnly} />
           </div>
           <div>
             <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" rows={3} {...form.register("notes")} />
+            <Textarea id="notes" rows={3} {...form.register("notes")} disabled={isReadOnly} />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={mutation.isPending}>
-          Save Changes
-        </Button>
-      </div>
+      {!isReadOnly && (
+        <div className="flex justify-end">
+          <Button type="submit" disabled={mutation.isPending}>
+            Save Changes
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
-

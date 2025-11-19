@@ -42,6 +42,7 @@ import type { Member as MemberType } from "@/app/dashboard/[slug]/members/action
 interface MembersListProps {
   initialMembers: MemberType[];
   franchiseSlug: string;
+  isReadOnly?: boolean;
 }
 
 const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
@@ -49,7 +50,7 @@ const PROGRAM_OPTIONS = ["jr", "create", "ai", "robotics", "clubs", "camp"];
 const formatStatus = (status?: string | null) =>
   status ? status.replace(/_/g, " ") : "Active";
 
-export function MembersList({ initialMembers, franchiseSlug }: MembersListProps) {
+export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false }: MembersListProps) {
   const [members, setMembers] = useState(initialMembers);
   useEffect(() => {
     setMembers(initialMembers);
@@ -253,9 +254,11 @@ export function MembersList({ initialMembers, franchiseSlug }: MembersListProps)
                       >
                         SMS Guardian
                       </DropdownMenuItem>
+                      {!isReadOnly && (
                         <DropdownMenuItem onClick={() => setEditingMember(member)}>
                           Edit Details
                         </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -287,6 +290,7 @@ export function MembersList({ initialMembers, franchiseSlug }: MembersListProps)
               leadId={editingMember.leadId}
               guardianId={editingMember.guardianId}
               studentId={editingMember.studentId}
+              isReadOnly={isReadOnly}
               initialValues={{
                 guardianFirstName: editingMember.guardianFirstName || "",
                 guardianLastName: editingMember.guardianLastName || "",

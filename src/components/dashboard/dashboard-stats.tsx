@@ -60,6 +60,7 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
 
 interface DashboardStatsProps {
   userName?: string;
+  showLtv?: boolean;
   stats: {
     totalLifetimeValue: number;
     quickStats: {
@@ -173,7 +174,7 @@ function SemiCircleGauge({
   );
 }
 
-export function DashboardStats({ stats, userName }: DashboardStatsProps) {
+export function DashboardStats({ stats, userName, showLtv = false }: DashboardStatsProps) {
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -198,25 +199,27 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
         </div>
       </div>
       
-      <Card className="border-none shadow-sm bg-white">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg text-slate-900">Total Estimated Lifetime Value</CardTitle>
-            <CardDescription>Families not yet enrolled or waitlisted • Since 2026</CardDescription>
-          </div>
-          <MoreVertical className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="flex items-end justify-between">
-          <div>
-            <p className="text-4xl font-bold text-green-500">
-              {currencyFormatter.format(stats.totalLifetimeValue)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Grows $249 every month per pending family until enrollment.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {showLtv && (
+        <Card className="border-none shadow-sm bg-white">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg text-slate-900">Total Estimated Lifetime Value</CardTitle>
+              <CardDescription>Families not yet enrolled or waitlisted • Since 2026</CardDescription>
+            </div>
+            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div>
+              <p className="text-4xl font-bold text-green-500">
+                {currencyFormatter.format(stats.totalLifetimeValue)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Grows $249 every month per pending family until enrollment.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats Row */}
       <Card className="border-none shadow-sm bg-white">

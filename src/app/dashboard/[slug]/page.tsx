@@ -5,6 +5,17 @@ import { differenceInHours, differenceInMonths, isPast } from "date-fns";
 export default async function DashboardOverview({ params }: { params: { slug: string } }) {
   const supabase = createClient();
 
+  // Get Current User & Profile
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id || "")
+    .single();
+
+  const role = profile?.role || "sensei";
+  const showLtv = role === "franchisee";
+
   const { data: franchise } = await supabase
     .from("franchises")
     .select("id, name")
@@ -168,7 +179,7 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   return (
     <div className="space-y-6">
-      <DashboardStats stats={stats} userName={franchise.name} />
+      <DashboardStats stats={stats} userName={franchise.name} showLtv={showLtv} />
     </div>
   );
 }

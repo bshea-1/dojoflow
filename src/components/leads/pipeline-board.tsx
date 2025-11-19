@@ -13,7 +13,6 @@ import {
   defaultDropAnimationSideEffects,
   DropAnimation,
 } from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { PipelineColumn } from "./pipeline-column";
 import { LeadCard } from "./lead-card";
 import { createClient } from "@/lib/supabase/client";
@@ -38,6 +37,7 @@ const COLUMNS: { id: LeadStatus; title: string }[] = [
 interface PipelineBoardProps {
   initialLeads?: LeadWithGuardian[];
   franchiseSlug: string;
+  isReadOnly?: boolean;
 }
 
 const dropAnimation: DropAnimation = {
@@ -50,7 +50,7 @@ const dropAnimation: DropAnimation = {
   }),
 };
 
-export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProps) {
+export function PipelineBoard({ franchiseSlug, initialLeads, isReadOnly = false }: PipelineBoardProps) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -59,6 +59,9 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
   const { data: leads = [] } = useQuery({
     queryKey: ["leads", franchiseSlug],
     queryFn: async () => {
+      // We need the franchise ID to filter leads correctly in client-side refetching if needed
+      // But ideally we rely on server actions/invalidation.
+      // For now, basic select is fine as we rely on initialData mostly.
       const { data, error } = await supabase
         .from("leads")
         .select("*, guardians(*, students(*))");
@@ -71,7 +74,7 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
 
   const mutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
-      return await updateLeadStatus(id, status);
+      return await updateLeadStatus(id, status, franchiseSlug);
     },
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ["leads", franchiseSlug] });
@@ -99,6 +102,7 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
       activationConstraint: {
         distance: 8,
       },
+      // Disable sensors if read-only
     })
   );
 
@@ -117,15 +121,18 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
   );
 
   function handleDragStart(event: DragStartEvent) {
+    if (isReadOnly) return;
     setActiveId(event.active.id as string);
   }
 
   function handleDragOver(event: DragOverEvent) {
+     if (isReadOnly) return;
     // In a more complex implementation, we might move items between arrays here for smooth list reordering
     // For now, we handle the logical move on DragEnd
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (isReadOnly) return;
     const { active, over } = event;
     setActiveId(null);
 
@@ -134,16 +141,12 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
     const activeLeadId = active.id as string;
     const overId = over.id as string;
 
-    // Find which column the "over" target belongs to
-    // "over" could be a column ID or another card ID
     let newStatus: LeadStatus | undefined;
 
-    // Check if over a column directly
     const overColumn = COLUMNS.find((col) => col.id === overId);
     if (overColumn) {
       newStatus = overColumn.id;
     } else {
-      // Check if over a card
       const overLead = leads.find((l) => l.id === overId);
       if (overLead) {
         newStatus = overLead.status;
@@ -153,6 +156,34 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
     if (newStatus && activeLead && activeLead.status !== newStatus) {
       mutation.mutate({ id: activeLeadId, status: newStatus });
     }
+  }
+
+  // If Read Only, just render columns without DnD context wrapper to prevent any drag interactions
+  if (isReadOnly) {
+     return (
+       <>
+         <div className="flex h-[calc(100vh-10rem)] gap-4 overflow-x-auto pb-4">
+           {columns.map((col) => (
+             <PipelineColumn
+               key={col.id}
+               id={col.id || "new"}
+               title={col.title}
+               leads={col.leads}
+               onLeadClick={(lead) => setSelectedLead(lead)}
+             />
+           ))}
+         </div>
+         {selectedLead && (
+            <LeadDetailDialog
+              lead={selectedLead}
+              franchiseSlug={franchiseSlug}
+              open={!!selectedLead}
+              onOpenChange={(open) => !open && setSelectedLead(null)}
+              isReadOnly={true}
+            />
+         )}
+       </>
+     )
   }
 
   return (
@@ -186,6 +217,7 @@ export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProp
           franchiseSlug={franchiseSlug}
           open={!!selectedLead}
           onOpenChange={(open) => !open && setSelectedLead(null)}
+          isReadOnly={isReadOnly}
         />
       )}
     </>

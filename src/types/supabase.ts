@@ -43,7 +43,7 @@ export interface Database {
           id: string
           franchise_id: string | null
           full_name: string | null
-          role: 'owner' | 'director' | null
+          role: 'franchisee' | 'center_director' | 'sensei' | null
           created_at: string
           updated_at: string
         }
@@ -51,7 +51,7 @@ export interface Database {
           id: string
           franchise_id?: string | null
           full_name?: string | null
-          role?: 'owner' | 'director' | null
+          role?: 'franchisee' | 'center_director' | 'sensei' | null
           created_at?: string
           updated_at?: string
         }
@@ -59,7 +59,7 @@ export interface Database {
           id?: string
           franchise_id?: string | null
           full_name?: string | null
-          role?: 'owner' | 'director' | null
+          role?: 'franchisee' | 'center_director' | 'sensei' | null
           created_at?: string
           updated_at?: string
         }
@@ -263,6 +263,9 @@ export interface Database {
         }
       }
     }
+    Enums: {
+      program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party'
+      app_role: 'franchisee' | 'center_director' | 'sensei'
+    }
   }
 }
-

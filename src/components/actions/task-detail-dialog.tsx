@@ -54,6 +54,8 @@ interface TaskDetailDialogProps {
   franchiseSlug: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaveAndAdd?: () => void;
+  isReadOnly?: boolean;
 }
 
 const OUTCOME_OPTIONS = [
@@ -69,20 +71,13 @@ const OUTCOME_OPTIONS = [
   "Other"
 ];
 
-interface TaskDetailDialogProps {
-  task: Task;
-  franchiseSlug: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaveAndAdd?: () => void;
-}
-
 export function TaskDetailDialog({ 
   task, 
   franchiseSlug, 
   open, 
   onOpenChange,
-  onSaveAndAdd
+  onSaveAndAdd,
+  isReadOnly = false
 }: TaskDetailDialogProps) {
   const queryClient = useQueryClient();
   const [outcome, setOutcome] = useState<string>(task.outcome || "");
@@ -136,18 +131,20 @@ export function TaskDetailDialog({
               {getIcon(task.type)}
               <DialogTitle>{task.title}</DialogTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => {
-                if (confirm("Delete this task?")) {
-                  deleteTaskMutation.mutate();
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isReadOnly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  if (confirm("Delete this task?")) {
+                    deleteTaskMutation.mutate();
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           <DialogDescription>
             {task.leads ? (
@@ -179,7 +176,7 @@ export function TaskDetailDialog({
             
             <div className="space-y-2">
               <label className="text-xs font-medium">Outcome / Result</label>
-              <Select value={outcome} onValueChange={setOutcome}>
+              <Select value={outcome} onValueChange={setOutcome} disabled={isReadOnly}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select outcome..." />
                 </SelectTrigger>
@@ -192,26 +189,36 @@ export function TaskDetailDialog({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Notes field could be added here if we want to update description or add a new note */}
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button 
-            variant="outline" 
-            className="w-full sm:w-auto"
-            onClick={() => updateStatusMutation.mutate({ status: "completed" })}
-          >
-            Save Task
-          </Button>
-          <Button 
-            className="w-full sm:w-auto"
-            onClick={() => updateStatusMutation.mutate({ status: "completed", closeAfter: true })}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            Save + Add Task
-          </Button>
+          {!isReadOnly ? (
+            <>
+              <Button 
+                variant="outline" 
+                className="w-full sm:w-auto"
+                onClick={() => updateStatusMutation.mutate({ status: "completed" })}
+              >
+                Save Task
+              </Button>
+              <Button 
+                className="w-full sm:w-auto"
+                onClick={() => updateStatusMutation.mutate({ status: "completed", closeAfter: true })}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Save + Add Task
+              </Button>
+            </>
+          ) : (
+            <Button 
+              variant="secondary" 
+              className="w-full sm:w-auto"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

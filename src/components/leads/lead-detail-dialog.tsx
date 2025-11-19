@@ -51,13 +51,15 @@ interface LeadDetailDialogProps {
   franchiseSlug: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isReadOnly?: boolean;
 }
 
 export function LeadDetailDialog({ 
   lead, 
   franchiseSlug, 
   open, 
-  onOpenChange 
+  onOpenChange,
+  isReadOnly = false
 }: LeadDetailDialogProps) {
   const queryClient = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -83,10 +85,12 @@ export function LeadDetailDialog({
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: async (params?: { title: string; type: any; date: string }) => {
+    mutationFn: async (params?: { title: string; type: any; date: string; notifyEmail?: boolean; notifySms?: boolean }) => {
       const title = params?.title || newTaskTitle;
       const type = params?.type || newTaskType;
       const date = params?.date || newTaskDate;
+      const emailNotify = params?.notifyEmail ?? notifyEmail;
+      const smsNotify = params?.notifySms ?? notifySms;
 
       if (!title) return;
 
@@ -95,8 +99,8 @@ export function LeadDetailDialog({
         type,
         dueDate: date ? new Date(date) : undefined,
         leadId: lead.id,
-        notifyEmail,
-        notifySms,
+        notifyEmail: emailNotify,
+        notifySms: smsNotify,
       }, franchiseSlug);
 
       if (result.error) {
@@ -172,6 +176,7 @@ export function LeadDetailDialog({
               <Select 
                 defaultValue={lead.status || "new"} 
                 onValueChange={(val) => updateStatusMutation.mutate(val)}
+                disabled={isReadOnly}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Status" />
@@ -185,17 +190,20 @@ export function LeadDetailDialog({
                   <SelectItem value="lost">Lost</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                variant="destructive" 
-                size="icon"
-                onClick={() => {
-                  if (confirm("Are you sure you want to delete this lead? (Debug)")) {
-                    deleteLeadMutation.mutate();
-                  }
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              
+              {!isReadOnly && (
+                <Button 
+                  variant="destructive" 
+                  size="icon"
+                  onClick={() => {
+                    if (confirm("Are you sure you want to delete this lead? (Debug)")) {
+                      deleteLeadMutation.mutate();
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -211,157 +219,171 @@ export function LeadDetailDialog({
 
             <TabsContent value="tasks" className="flex-1 flex flex-col overflow-hidden mt-0 p-0">
               <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-                {/* Quick Add Task */}
-                <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
-                    <Plus className="h-4 w-4" /> Add New Task
-                  </h4>
-                  <div className="flex gap-2">
-                    <Select 
-                      value={newTaskType} 
-                      onValueChange={(v: any) => setNewTaskType(v)}
-                    >
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="call">Call</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="review">Review</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input 
-                      placeholder="Task description..." 
-                      value={newTaskTitle}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <Input 
-                      type="date" 
-                      className="w-auto"
-                      value={newTaskDate}
-                      onChange={(e) => setNewTaskDate(e.target.value)}
-                    />
-                    <div className="flex-1" />
-                    <Button 
-                      size="sm" 
-                      onClick={() => createTaskMutation.mutate(undefined)}
-                      disabled={!newTaskTitle || createTaskMutation.isPending}
-                    >
-                      Add Task
-                    </Button>
-                  </div>
+                {/* Quick Add Task - Hide if Read Only */}
+                {!isReadOnly && (
+                  <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Plus className="h-4 w-4" /> Add New Task
+                    </h4>
+                    <div className="flex gap-2">
+                      <Select 
+                        value={newTaskType} 
+                        onValueChange={(v: any) => setNewTaskType(v)}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="call">Call</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
+                          <SelectItem value="text">Text</SelectItem>
+                          <SelectItem value="review">Review</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input 
+                        placeholder="Task description..." 
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Input 
+                        type="date" 
+                        className="w-auto"
+                        value={newTaskDate}
+                        onChange={(e) => setNewTaskDate(e.target.value)}
+                      />
+                      <div className="flex-1" />
+                      <Button 
+                        size="sm" 
+                        onClick={() => createTaskMutation.mutate(undefined)}
+                        disabled={!newTaskTitle || createTaskMutation.isPending}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
 
-                  {/* Notifications */}
-                  <div className="flex gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
-                      <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+                    {/* Notifications */}
+                    <div className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
+                        <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
+                        <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
-                      <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+                    
+                    {/* Quick Presets */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          createTaskMutation.mutate({
+                            title: "Call lead",
+                            type: "call",
+                            date: tomorrow.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Call Tomorrow
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const nextWeek = new Date();
+                          nextWeek.setDate(nextWeek.getDate() + 7);
+                          createTaskMutation.mutate({
+                            title: "Review lead status",
+                            type: "review",
+                            date: nextWeek.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Review in 7 Days
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          createTaskMutation.mutate({
+                            title: "Email Follow-up",
+                            type: "email",
+                            date: tomorrow.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Email Follow-up
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const twoDays = new Date();
+                          twoDays.setDate(twoDays.getDate() + 2);
+                          createTaskMutation.mutate({
+                            title: "Text Check-in",
+                            type: "text",
+                            date: twoDays.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Text Check-in
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          createTaskMutation.mutate({
+                            title: "Post-Tour Follow-up",
+                            type: "call",
+                            date: tomorrow.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Post-Tour Follow-up
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          const month = new Date();
+                          month.setDate(month.getDate() + 30);
+                          createTaskMutation.mutate({
+                            title: "Monthly Check-in",
+                            type: "call",
+                            date: month.toISOString().split('T')[0],
+                            notifyEmail,
+                            notifySms,
+                          });
+                        }}
+                      >
+                        Monthly Check-in
+                      </Badge>
                     </div>
                   </div>
-                  
-                  {/* Quick Presets */}
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        createTaskMutation.mutate({
-                          title: "Call lead",
-                          type: "call",
-                          date: tomorrow.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Call Tomorrow
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const nextWeek = new Date();
-                        nextWeek.setDate(nextWeek.getDate() + 7);
-                        createTaskMutation.mutate({
-                          title: "Review lead status",
-                          type: "review",
-                          date: nextWeek.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Review in 7 Days
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        createTaskMutation.mutate({
-                          title: "Email Follow-up",
-                          type: "email",
-                          date: tomorrow.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Email Follow-up
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const twoDays = new Date();
-                        twoDays.setDate(twoDays.getDate() + 2);
-                        createTaskMutation.mutate({
-                          title: "Text Check-in",
-                          type: "text",
-                          date: twoDays.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Text Check-in
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        createTaskMutation.mutate({
-                          title: "Post-Tour Follow-up",
-                          type: "call",
-                          date: tomorrow.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Post-Tour Follow-up
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => {
-                        const month = new Date();
-                        month.setDate(month.getDate() + 30);
-                        createTaskMutation.mutate({
-                          title: "Monthly Check-in",
-                          type: "call",
-                          date: month.toISOString().split('T')[0]
-                        });
-                      }}
-                    >
-                      Monthly Check-in
-                    </Badge>
-                  </div>
-                </div>
+                )}
 
                 <Separator />
 
@@ -381,6 +403,7 @@ export function LeadDetailDialog({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0"
+                          disabled={isReadOnly}
                           onClick={() => toggleTaskMutation.mutate({ 
                             id: task.id, 
                             status: task.status === "completed" ? "pending" : "completed" 
@@ -405,14 +428,16 @@ export function LeadDetailDialog({
                           )}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                        onClick={() => deleteTaskMutation.mutate(task.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                          onClick={() => deleteTaskMutation.mutate(task.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -426,6 +451,7 @@ export function LeadDetailDialog({
                   leadId={lead.id}
                   guardianId={guardian.id}
                   studentId={guardian.students?.[0]?.id}
+                  isReadOnly={isReadOnly}
                   initialValues={{
                     guardianFirstName: guardian.first_name || "",
                     guardianLastName: guardian.last_name || "",

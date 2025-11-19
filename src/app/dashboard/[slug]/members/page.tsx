@@ -1,7 +1,21 @@
 import { getMembers } from "./actions";
 import { MembersList } from "@/components/members/members-list";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function MembersPage({ params }: { params: { slug: string } }) {
+  const supabase = createClient();
+
+  // Get Current User Role
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id || "")
+    .single();
+  
+  const role = profile?.role || "sensei";
+  const isReadOnly = role === "sensei";
+
   const members = await getMembers(params.slug);
 
   return (
@@ -15,7 +29,11 @@ export default async function MembersPage({ params }: { params: { slug: string }
       </div>
       
       <div className="flex-1 overflow-y-auto pb-10">
-        <MembersList initialMembers={members} franchiseSlug={params.slug} />
+        <MembersList 
+          initialMembers={members} 
+          franchiseSlug={params.slug} 
+          isReadOnly={isReadOnly}
+        />
       </div>
     </div>
   );
