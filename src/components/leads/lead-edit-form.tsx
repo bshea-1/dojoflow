@@ -19,24 +19,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateLeadDetails } from "@/app/dashboard/[slug]/pipeline/actions";
 import { toast } from "sonner";
 
-export interface LeadEditFormValues {
-  guardianFirstName: string;
-  guardianLastName: string;
-  guardianEmail: string;
-  guardianPhone: string;
-  studentFirstName: string;
-  studentProgram: string;
-  studentDob?: string;
-  source?: string;
-  notes?: string;
-}
-
 interface LeadEditFormProps {
   franchiseSlug: string;
   leadId: string;
   guardianId: string;
   studentId?: string;
-  initialValues: LeadEditFormValues;
+  initialValues: EditLeadSchema;
   onSaved?: (values: EditLeadSchema) => void;
 }
 

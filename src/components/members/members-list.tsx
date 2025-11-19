@@ -293,7 +293,7 @@ export function MembersList({ initialMembers, franchiseSlug }: MembersListProps)
                 guardianEmail: editingMember.email || "",
                 guardianPhone: editingMember.phone || "",
                 studentFirstName: editingMember.studentName || "",
-                studentProgram: editingMember.program || "jr",
+                studentProgram: (editingMember.program || "jr") as EditLeadSchema["studentProgram"],
                 source: editingMember.source || "",
                 notes: editingMember.notes || "",
               }}

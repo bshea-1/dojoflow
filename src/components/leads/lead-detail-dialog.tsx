@@ -44,6 +44,7 @@ import { getLeadTasks, updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/
 import { createTask, updateTaskStatus, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
 import { deleteLead } from "@/app/dashboard/[slug]/pipeline/delete-action";
 import { LeadEditForm } from "./lead-edit-form";
+import { EditLeadSchema } from "@/lib/schemas/edit-lead";
 
 type StudentRow = Database["public"]["Tables"]["students"]["Row"];
 type GuardianRow = Database["public"]["Tables"]["guardians"]["Row"] & {
@@ -440,7 +441,9 @@ export function LeadDetailDialog({
                     guardianEmail: guardian.email || "",
                     guardianPhone: guardian.phone || "",
                     studentFirstName: guardian.students?.[0]?.first_name || "",
-                    studentProgram: guardian.students?.[0]?.program_interest || "jr",
+                    studentProgram: (
+                      (guardian.students?.[0]?.program_interest || "jr") as EditLeadSchema["studentProgram"]
+                    ),
                     studentDob: guardian.students?.[0]?.dob
                       ? guardian.students?.[0]?.dob.split("T")[0]
                       : undefined,
