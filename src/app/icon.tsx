@@ -1,49 +1,39 @@
-"use client";
+import { ImageResponse } from "next/og";
 
-// Next.js App Router will use this file to generate favicons, including /favicon.ico.
-// We reuse the same dojo-style mark used for the PWA logo.
+// Generate the app icon (used for /icon and /favicon.ico) at build/runtime.
+// This runs on the server – do NOT mark it as "use client".
+
+export const size = {
+  width: 64,
+  height: 64,
+};
+
+export const contentType = "image/png";
 
 export default function Icon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 128 128"
-      role="img"
-      aria-label="DojoFlow"
-    >
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1d4ed8" />
-          <stop offset="100%" stopColor="#38bdf8" />
-        </linearGradient>
-      </defs>
-      <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bg)" />
-      <circle cx="64" cy="52" r="20" fill="#0f172a" opacity="0.9" />
-      <path
-        d="M40 96c4-16 12-24 24-24s20 8 24 24"
-        fill="none"
-        stroke="#0f172a"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M52 52c2-4 6-6 12-6s10 2 12 6"
-        fill="none"
-        stroke="#e5e7eb"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <circle cx="56" cy="50" r="2.5" fill="#e5e7eb" />
-      <circle cx="72" cy="50" r="2.5" fill="#e5e7eb" />
-      <path
-        d="M58 60c2 2 4 3 6 3s4-1 6-3"
-        fill="none"
-        stroke="#22c55e"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    </svg>
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 16,
+          background: "linear-gradient(135deg, #1d4ed8, #38bdf8)",
+          fontSize: 32,
+          fontWeight: 800,
+          color: "#e5e7eb",
+          letterSpacing: "-0.08em",
+        }}
+      >
+        DF
+      </div>
+    ),
+    size
   );
 }
+
 
 
