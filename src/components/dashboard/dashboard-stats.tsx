@@ -38,18 +38,14 @@ interface DashboardStatsProps {
 }
 
 function SemiCircleGauge({ value, color, label, subLabel }: { value: number; color: string; label: string; subLabel?: string }) {
-  // If value is 0, show a small sliver in red (or grey track with red indicator)
-  // We'll force a small value so it renders, but color it differently if true 0?
-  // Actually, let's use the background track for the "empty" part.
-  // If value is 0, we can render a tiny value (1) with a specific color, or just let it be empty but show the background.
-  // User request: "show part of the stat in red, so it isn't just blank/invisible"
+  // If value is 0, we want a visible "empty" track (background) and a very small colored segment.
+  // The background prop on RadialBar will render the track for the max domain.
   
   const isZero = value === 0;
-  const renderValue = isZero ? 100 : value; // If 0, maybe fill it all red? Or just a small blip?
-  // Let's try a small blip:
+  // If 0, we display a tiny value (e.g. 1 or 2) to make a visible 'dot' or 'sliver'
   const displayValue = isZero ? 2 : value; 
-  const displayColor = isZero ? "#ef4444" : color;
-  
+  const displayColor = isZero ? "#ef4444" : color; // Red if 0%, else the passsed color
+
   const data = [{ name: "value", value: displayValue, fill: displayColor }];
   
   return (
@@ -66,6 +62,10 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
             startAngle={180} 
             endAngle={0}
           >
+            {/* 
+              PolarAngleAxis with domain [0, 100] ensures the chart scale is always 0-100%.
+              This makes the 'background' prop on RadialBar render as a full 180-degree semicircle (the track).
+            */}
             <PolarAngleAxis
               type="number"
               domain={[0, 100]}
@@ -73,9 +73,10 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
               tick={false}
             />
             <RadialBar
-              background
+              background={{ fill: '#f3f4f6' }} // Light gray track
               dataKey="value"
-              cornerRadius={10}
+              cornerRadius={10} // Rounded ends for the value bar
+              clockWise
             />
           </RadialBarChart>
         </ResponsiveContainer>

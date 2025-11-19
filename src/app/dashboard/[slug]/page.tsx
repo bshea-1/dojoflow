@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
-import { isPast } from "date-fns";
+import { isPast, differenceInMonths } from "date-fns";
 
 export default async function DashboardOverview({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -25,13 +25,23 @@ export default async function DashboardOverview({ params }: { params: { slug: st
   const tours = toursRes.data || [];
 
   // --- 1. Total Estimated Lifetime Value ---
-  // "Based off the parent paying $249/month"
-  // "Make it clear that it is since 2026"
-  // "It should go up accordingly with each parent each month"
-  // Interpretation: Calculate value based on potential leads in the pipeline (not enrolled, not lost)
-  // Value = (Leads in pipeline) * $249 * 12 months (Annual potential)
-  const potentialLeadsCount = leads.filter(l => l.status !== "enrolled" && l.status !== "lost").length;
-  const totalLifetimeValue = potentialLeadsCount * 249 * 12;
+  // Calculation: For every lead that is NOT Enrolled and NOT Lost,
+  // Calculate months since created_at (minimum 1 month).
+  // Sum (months * $249).
+  let totalLifetimeValue = 0;
+  const now = new Date();
+  
+  leads.forEach(lead => {
+    if (lead.status !== "enrolled" && lead.status !== "lost") {
+      const createdAt = new Date(lead.created_at);
+      // Determine months in pipeline.
+      // If created today, differenceInMonths is 0. We want at least 1 month value?
+      // "goes up by $249 each month". If they just entered, maybe it's $249 immediately (current month).
+      // Let's assume inclusive of current month.
+      const monthsInPipeline = Math.max(1, differenceInMonths(now, createdAt) + 1);
+      totalLifetimeValue += monthsInPipeline * 249;
+    }
+  });
 
   // --- 2. Quick Stats ---
   // A. Families Completing Tours Within 24 Hours (Placeholder)
