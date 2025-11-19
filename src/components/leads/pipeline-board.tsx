@@ -52,7 +52,7 @@ const dropAnimation: DropAnimation = {
   }),
 };
 
-export function PipelineBoard({ franchiseSlug }: PipelineBoardProps) {
+export function PipelineBoard({ franchiseSlug, initialLeads }: PipelineBoardProps) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -68,6 +68,7 @@ export function PipelineBoard({ franchiseSlug }: PipelineBoardProps) {
       if (error) throw error;
       return data as LeadWithGuardian[];
     },
+    initialData: initialLeads,
   });
 
   const mutation = useMutation({
