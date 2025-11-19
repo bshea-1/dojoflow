@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 import { newLeadSchema, NewLeadSchema } from "@/lib/schemas/new-lead";
 import { createLead } from "@/app/dashboard/[slug]/pipeline/actions";
@@ -84,7 +85,7 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
           <Plus className="mr-2 h-4 w-4" /> New Lead
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Lead</DialogTitle>
           <DialogDescription>
@@ -92,10 +93,16 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm border-b pb-1">Guardian</h3>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            
+            {/* Guardian Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg">Guardian Information</h3>
+                <Separator className="flex-1" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="guardian.firstName"
@@ -122,6 +129,9 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="guardian.email"
@@ -149,22 +159,30 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
                   )}
                 />
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm border-b pb-1">Student</h3>
-                <FormField
-                  control={form.control}
-                  name="student.firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ninja Sam" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            {/* Student Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg">Student Information</h3>
+                <Separator className="flex-1" />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="student.firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ninja Sam" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="student.dob"
@@ -196,9 +214,13 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="jr">JR (Ages 5-7)</SelectItem>
-                          <SelectItem value="create">Create (Ages 7-14)</SelectItem>
+                          <SelectItem value="jr">JR</SelectItem>
+                          <SelectItem value="create">Create</SelectItem>
                           <SelectItem value="camp">Camps</SelectItem>
+                          <SelectItem value="ai">AI</SelectItem>
+                          <SelectItem value="robotics">Robotics</SelectItem>
+                          <SelectItem value="clubs">Clubs</SelectItem>
+                          <SelectItem value="birthday_party">Birthday Party</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -208,7 +230,13 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
               </div>
             </div>
 
-            <div className="space-y-4 pt-2 border-t">
+            {/* Additional Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg">Additional Details</h3>
+                <Separator className="flex-1" />
+              </div>
+
               <FormField
                 control={form.control}
                 name="source"
@@ -246,4 +274,3 @@ export function NewLeadDialog({ franchiseSlug }: NewLeadDialogProps) {
     </Dialog>
   );
 }
-

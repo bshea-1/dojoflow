@@ -292,7 +292,7 @@ export function BookTourDialog({
                               <FormItem>
                                 <FormLabel>Age</FormLabel>
                                 <FormControl>
-                                  <Input type="number" min={3} max={18} {...field} />
+                                  <Input type="number" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

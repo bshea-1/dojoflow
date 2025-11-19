@@ -1,19 +1,30 @@
 import { z } from "zod";
 
-const programValues = ["jr", "create", "camp"] as const;
+const programValues = [
+  "jr", 
+  "create", 
+  "camp", 
+  "ai", 
+  "robotics", 
+  "clubs", 
+  "birthday_party"
+] as const;
+
 export type ProgramInterestValue = typeof programValues[number];
+
 export const programLeadOptions = [
-  { value: "jr", label: "JR (5-7)" },
-  { value: "create", label: "Create (7-14)" },
+  { value: "jr", label: "JR" },
+  { value: "create", label: "Create" },
   { value: "camp", label: "Camps" },
+  { value: "ai", label: "AI" },
+  { value: "robotics", label: "Robotics" },
+  { value: "clubs", label: "Clubs" },
+  { value: "birthday_party", label: "Birthday Party" },
 ] as const;
 
 const childSchema = z.object({
   name: z.string().min(1, "Child name is required"),
-  age: z.coerce
-    .number()
-    .min(3, "Age must be at least 3")
-    .max(18, "Age must be 18 or younger"),
+  age: z.coerce.number().optional(), // Relaxed age validation
 });
 
 const newLeadPayload = z.object({
@@ -62,4 +73,3 @@ export const bookTourSchema = z
   });
 
 export type BookTourSchema = z.infer<typeof bookTourSchema>;
-
