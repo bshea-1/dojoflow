@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,12 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
     { href: `/dashboard/${franchiseSlug}/members`, label: "Members", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
+
+  useEffect(() => {
+    links.forEach((link) => {
+      router.prefetch(link.href);
+    });
+  }, [router, franchiseSlug]);
 
   // Find current franchise name
   const currentFranchiseName = assignedFranchises.find(f => f.slug === franchiseSlug)?.name || "Select Location";
