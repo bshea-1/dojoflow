@@ -28,6 +28,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 import { Database } from "@/types/supabase";
 import { getTasks, createTask, deleteTask } from "@/app/dashboard/[slug]/actions/actions";
@@ -54,6 +56,8 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
   const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
   const [newTaskDate, setNewTaskDate] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [notifyEmail, setNotifyEmail] = useState(false);
+  const [notifySms, setNotifySms] = useState(false);
 
   const { data: tasks = initialTasks } = useQuery({
     queryKey: ["tasks", franchiseSlug],
@@ -68,12 +72,16 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
         title: newTaskTitle,
         type: newTaskType,
         dueDate: newTaskDate ? new Date(newTaskDate) : undefined,
+        notifyEmail,
+        notifySms,
       }, franchiseSlug);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", franchiseSlug] });
       setNewTaskTitle("");
       setNewTaskDate("");
+      setNotifyEmail(false);
+      setNotifySms(false);
       toast.success("Task added");
     },
   });
@@ -213,6 +221,16 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
             >
               <Plus className="mr-2 h-4 w-4" /> Add
             </Button>
+          </div>
+          <div className="flex gap-4 mt-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
+              <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
+              <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+            </div>
           </div>
         </CardContent>
       </Card>

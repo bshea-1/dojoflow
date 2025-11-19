@@ -61,6 +61,8 @@ export async function createTask(data: TaskSchema, franchiseSlug: string) {
     type: data.type,
     lead_id: data.leadId,
     status: "pending",
+    notify_email: data.notifyEmail,
+    notify_sms: data.notifySms,
   });
 
   if (error) return { error: error.message };

@@ -38,6 +38,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 import { Database } from "@/types/supabase";
 import { getLeadTasks, updateLeadStatus } from "@/app/dashboard/[slug]/pipeline/actions";
@@ -65,6 +67,8 @@ export function LeadDetailDialog({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
   const [newTaskDate, setNewTaskDate] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState(false);
+  const [notifySms, setNotifySms] = useState(false);
 
   // Fetch Tasks
   const { data: tasks = [] } = useQuery({
@@ -95,6 +99,8 @@ export function LeadDetailDialog({
         type,
         dueDate: date ? new Date(date) : undefined,
         leadId: lead.id,
+        notifyEmail,
+        notifySms,
       }, franchiseSlug);
 
       if (result.error) {
@@ -106,6 +112,8 @@ export function LeadDetailDialog({
       queryClient.invalidateQueries({ queryKey: ["tasks", franchiseSlug] }); // Refresh global list too
       setNewTaskTitle("");
       setNewTaskDate("");
+      setNotifyEmail(false);
+      setNotifySms(false);
       toast.success("Task added");
     },
     onError: (error) => {
@@ -250,6 +258,18 @@ export function LeadDetailDialog({
                     >
                       Add Task
                     </Button>
+                  </div>
+
+                  {/* Notifications */}
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="notify_email" checked={notifyEmail} onCheckedChange={(c) => setNotifyEmail(!!c)} />
+                      <Label htmlFor="notify_email" className="text-sm font-normal">Email Staff</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="notify_sms" checked={notifySms} onCheckedChange={(c) => setNotifySms(!!c)} />
+                      <Label htmlFor="notify_sms" className="text-sm font-normal">Text Staff</Label>
+                    </div>
                   </div>
                   
                   {/* Quick Presets */}

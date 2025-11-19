@@ -224,6 +224,8 @@ export interface Database {
           status: 'pending' | 'completed'
           type: 'call' | 'email' | 'text' | 'review' | 'other'
           outcome: string | null
+          notify_email: boolean | null
+          notify_sms: boolean | null
           created_at: string
           updated_at: string
         }
@@ -238,6 +240,8 @@ export interface Database {
           status?: 'pending' | 'completed'
           type?: 'call' | 'email' | 'text' | 'review' | 'other'
           outcome?: string | null
+          notify_email?: boolean | null
+          notify_sms?: boolean | null
           created_at?: string
           updated_at?: string
         }
@@ -252,6 +256,8 @@ export interface Database {
           status?: 'pending' | 'completed'
           type?: 'call' | 'email' | 'text' | 'review' | 'other'
           outcome?: string | null
+          notify_email?: boolean | null
+          notify_sms?: boolean | null
           created_at?: string
           updated_at?: string
         }
