@@ -29,7 +29,12 @@ type Tour = Database["public"]["Tables"]["tours"]["Row"] & {
 // Mock data for visualization if real data is empty
 const MOCK_HOURS = { start: 10, end: 19 }; // 10 AM to 7 PM
 
-export function CalendarView({ tours = [] }: { tours?: any[] }) {
+interface CalendarViewProps {
+  tours?: any[];
+  onSlotSelect?: (date: Date) => void;
+}
+
+export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
@@ -81,32 +86,39 @@ export function CalendarView({ tours = [] }: { tours?: any[] }) {
 
           {/* Time Slots */}
           {timeSlots.map((hour) => (
-            <>
-              <div key={`time-${hour}`} className="p-4 border-b border-r text-xs text-muted-foreground text-center h-20">
+            <div className="contents" key={`time-row-${hour}`}>
+              <div className="p-4 border-b border-r text-xs text-muted-foreground text-center h-20">
                 {format(new Date().setHours(hour, 0, 0, 0), "h a")}
               </div>
               {days.map((day) => {
-                 // Filter tours for this day and hour
                  const slotTours = tours.filter(t => {
                     const tDate = new Date(t.scheduled_at);
                     return isSameDay(tDate, day) && tDate.getHours() === hour;
                  });
 
+                 const slotDate = new Date(day);
+                 slotDate.setHours(hour, 0, 0, 0);
+
                  return (
                   <div
-                    key={`slot-${day}-${hour}`}
-                    className="p-1 border-b border-r h-20 relative hover:bg-slate-50 transition-colors"
+                    key={`slot-${day.toISOString()}-${hour}`}
+                    className="p-1 border-b border-r h-20 relative hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => slotTours.length === 0 && onSlotSelect?.(slotDate)}
                   >
                     {slotTours.map(tour => (
                       <div key={tour.id} className="bg-primary/10 text-primary border-l-2 border-primary text-[10px] p-1 rounded mb-1 truncate">
-                        {/* In real app, access joined guardian name */}
                         Tour Booked
                       </div>
                     ))}
+                    {slotTours.length === 0 && onSlotSelect && (
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">
+                        Tap to schedule
+                      </span>
+                    )}
                   </div>
                 );
               })}
-            </>
+            </div>
           ))}
         </div>
       </div>

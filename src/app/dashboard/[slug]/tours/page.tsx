@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { CalendarView } from "@/components/tours/calendar-view";
-import { BookTourDialog } from "@/components/tours/book-tour-dialog";
+import { ToursClient } from "@/components/tours/tours-client";
 
 export default async function ToursPage({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -45,15 +44,10 @@ export default async function ToursPage({ params }: { params: { slug: string } }
   })) || [];
 
   return (
-    <div className="h-full flex flex-col space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Tour Schedule</h1>
-        <BookTourDialog franchiseSlug={params.slug} leads={leadOptions} />
-      </div>
-
-      <div className="flex-1 h-[600px]">
-        <CalendarView tours={tours || []} />
-      </div>
-    </div>
+    <ToursClient
+      franchiseSlug={params.slug}
+      leads={leadOptions}
+      tours={tours || []}
+    />
   );
 }

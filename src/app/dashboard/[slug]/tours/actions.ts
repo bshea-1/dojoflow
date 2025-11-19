@@ -55,12 +55,55 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     return { error: `Selected time is outside operating hours (${dayHours.open} - ${dayHours.close}).` };
   }
 
+  let leadId = data.leadId;
+
+  if (data.leadMode === "new" && data.newLead) {
+    // Create the lead
+    const childSummary = data.newLead.children
+      .map((child) => `${child.name} (${child.age})`)
+      .join(", ");
+    const programSummary = data.newLead.programs.join(", ");
+
+    const { data: insertedLead, error: leadError } = await supabase
+      .from("leads")
+      .insert({
+        franchise_id: franchise.id,
+        status: "new",
+        source: "Tour Booking",
+        notes: `Children: ${childSummary} | Programs: ${programSummary}`,
+      })
+      .select()
+      .single();
+
+    if (leadError || !insertedLead) {
+      return { error: "Failed to create lead record" };
+    }
+
+    const { error: guardianError } = await supabase.from("guardians").insert({
+      lead_id: insertedLead.id,
+      first_name: data.newLead.parentFirstName,
+      last_name: data.newLead.parentLastName,
+      email: data.newLead.parentEmail,
+      phone: data.newLead.parentPhone,
+    });
+
+    if (guardianError) {
+      return { error: "Failed to create guardian record" };
+    }
+
+    leadId = insertedLead.id;
+  }
+
+  if (!leadId) {
+    return { error: "Select or create a lead before booking." };
+  }
+
   // 3. Create Tour
   const { error: tourError } = await supabase
     .from("tours")
     .insert({
       franchise_id: franchise.id,
-      lead_id: data.leadId,
+      lead_id: leadId,
       scheduled_at: data.scheduledAt.toISOString(),
       status: "scheduled",
     });
@@ -73,7 +116,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   await supabase
     .from("leads")
     .update({ status: "tour_booked" })
-    .eq("id", data.leadId);
+    .eq("id", leadId);
 
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);

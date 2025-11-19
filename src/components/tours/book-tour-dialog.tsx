@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,8 +32,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { bookTourSchema, BookTourSchema } from "@/lib/schemas/book-tour";
+import {
+  bookTourSchema,
+  BookTourSchema,
+  programLeadOptions,
+} from "@/lib/schemas/book-tour";
 import { bookTour } from "@/app/dashboard/[slug]/tours/actions";
 
 interface LeadOption {
@@ -44,16 +48,48 @@ interface LeadOption {
 
 interface BookTourDialogProps {
   franchiseSlug: string;
-  leads: LeadOption[]; // Passed from server component
+  leads: LeadOption[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialSlot?: Date;
 }
 
-export function BookTourDialog({ franchiseSlug, leads }: BookTourDialogProps) {
-  const [open, setOpen] = useState(false);
+export function BookTourDialog({
+  franchiseSlug,
+  leads,
+  open,
+  onOpenChange,
+  initialSlot,
+}: BookTourDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = typeof open === "boolean" && !!onOpenChange;
+  const dialogOpen = isControlled ? (open as boolean) : internalOpen;
+
+  const buildDefaultValues = useMemo(() => {
+    return () => ({
+      leadMode: (leads.length ? "existing" : "new") as "existing" | "new",
+      leadId: leads.length ? leads[0].id : undefined,
+      scheduledAt: undefined,
+      notes: "",
+      newLead: {
+        parentFirstName: "",
+        parentLastName: "",
+        parentEmail: "",
+        parentPhone: "",
+        children: [{ name: "", age: 7 }],
+        programs: [] as typeof programLeadOptions[number][],
+      },
+    });
+  }, [leads]);
+
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
-    defaultValues: {
-      notes: "",
-    },
+    defaultValues: buildDefaultValues(),
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "newLead.children",
   });
 
   async function onSubmit(data: BookTourSchema) {
@@ -65,21 +101,46 @@ export function BookTourDialog({ franchiseSlug, leads }: BookTourDialogProps) {
       }
 
       toast.success("Tour booked successfully");
-      setOpen(false);
-      form.reset();
+      handleOpenChange(false);
+      form.reset(buildDefaultValues());
     } catch (error) {
       toast.error("An unexpected error occurred");
     }
   }
 
+  const handleOpenChange = (next: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+
+    if (!next) {
+      form.reset(buildDefaultValues());
+    }
+  };
+
+  const leadMode = form.watch("leadMode");
+
+  useEffect(() => {
+    form.reset(buildDefaultValues());
+  }, [buildDefaultValues, form]);
+
+  useEffect(() => {
+    if (!leads.length) {
+      form.setValue("leadMode", "new");
+    }
+  }, [leads, form]);
+
+  useEffect(() => {
+    if (initialSlot) {
+      form.setValue("scheduledAt", initialSlot);
+    }
+  }, [initialSlot, form]);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CalendarIcon className="mr-2 h-4 w-4" /> Book Tour
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
           <DialogTitle>Book a Tour</DialogTitle>
           <DialogDescription>
@@ -87,31 +148,214 @@ export function BookTourDialog({ franchiseSlug, leads }: BookTourDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="leadId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Lead</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a lead..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {leads.map((lead) => (
-                        <SelectItem key={lead.id} value={lead.id}>
-                          {lead.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={leadMode === "existing" ? "default" : "outline"}
+                disabled={!leads.length}
+                onClick={() => form.setValue("leadMode", "existing")}
+              >
+                Existing Lead
+              </Button>
+              <Button
+                type="button"
+                variant={leadMode === "new" ? "default" : "outline"}
+                onClick={() => form.setValue("leadMode", "new")}
+              >
+                New Lead
+              </Button>
+            </div>
+
+            {leadMode === "existing" && (
+              <FormField
+                control={form.control}
+                name="leadId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Lead</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={!leads.length}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a lead..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {leads.map((lead) => (
+                          <SelectItem key={lead.id} value={lead.id}>
+                            {lead.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {leadMode === "new" && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <h4 className="text-sm font-semibold">Parent Details</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="newLead.parentFirstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Jane" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="newLead.parentLastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="newLead.parentEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="jane@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="newLead.parentPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="1234567890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Children</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ name: "", age: 7 })}
+                    >
+                      <Plus className="mr-2 h-3 w-3" /> Add Child
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {fields.map((fieldItem, index) => (
+                      <div
+                        key={fieldItem.id}
+                        className="rounded-md border p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">
+                            Child {index + 1}
+                          </span>
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name={`newLead.children.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Ninja Sam" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`newLead.children.${index}.age`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Age</FormLabel>
+                                <FormControl>
+                                  <Input type="number" min={3} max={18} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="newLead.programs"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Program Interests</FormLabel>
+                      <div className="grid grid-cols-2 gap-2">
+                        {programLeadOptions.map((program) => (
+                          <label
+                            key={program}
+                            className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                          >
+                            <Checkbox
+                              checked={field.value?.includes(program) ?? false}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...(field.value ?? []), program]);
+                                } else {
+                                  field.onChange(
+                                    (field.value ?? []).filter((p) => p !== program)
+                                  );
+                                }
+                              }}
+                            />
+                            {program}
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}
