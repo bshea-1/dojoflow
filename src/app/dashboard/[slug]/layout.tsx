@@ -17,11 +17,12 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, franchise_id")
     .eq("id", user.id)
     .single();
 
   const userRole = profile?.role || "sensei";
+  const userFranchiseId = profile?.franchise_id as string | null | undefined;
   let assignedFranchises: { name: string; slug: string }[] = [];
 
   // Always fetch the current franchise by slug so it can be included in the switcher
@@ -38,7 +39,7 @@ export default async function DashboardLayout({
       .eq("profile_id", user.id);
 
     if (data) {
-      // Guard against any null joined franchises (e.g. if a franchise was deleted)
+      // Only include franchises that are actually linked via the assignments table
       assignedFranchises = data
         .map((item: any) => item.franchises)
         .filter((f: any) => f && f.name && f.slug)
@@ -48,19 +49,38 @@ export default async function DashboardLayout({
         }));
     }
 
-    // Ensure the currently viewed franchise is always in the list,
-    // even if the join above failed due to missing relationship/RLS.
-    if (currentFranchise) {
-      const alreadyIncluded = assignedFranchises.some(
-        (f) => f.slug === currentFranchise.slug
+    // If the current slug is not one of the assigned franchises, redirect
+    if (assignedFranchises.length > 0) {
+      const slugAllowed = assignedFranchises.some(
+        (f) => f.slug === params.slug
       );
-      if (!alreadyIncluded) {
-        assignedFranchises.push(currentFranchise);
+      if (!slugAllowed) {
+        // Redirect to the first assigned location
+        redirect(`/dashboard/${assignedFranchises[0].slug}`);
       }
     }
   } else {
-    // For non-franchisees, they just have one location implicitly; show the current one.
-    if (currentFranchise) {
+    // For non-franchisee roles, tie location to the franchise_id on the profile when possible
+    if (userFranchiseId) {
+      const { data: primaryFranchise } = await supabase
+        .from("franchises")
+        .select("name, slug")
+        .eq("id", userFranchiseId)
+        .single();
+
+      if (primaryFranchise) {
+        assignedFranchises = [primaryFranchise];
+
+        // If URL slug doesn't match their profile franchise, redirect
+        if (params.slug !== primaryFranchise.slug) {
+          redirect(`/dashboard/${primaryFranchise.slug}`);
+        }
+      } else if (currentFranchise) {
+        // Fallback: profile franchise_id invalid, but slug points to a real franchise
+        assignedFranchises = [currentFranchise];
+      }
+    } else if (currentFranchise) {
+      // No franchise_id on profile; fall back to the current slug's franchise
       assignedFranchises = [currentFranchise];
     }
   }
