@@ -65,11 +65,40 @@ function SemiCircleGauge({
   const displayValue = isZero ? 2 : value; 
   const displayColor = getGaugeColor(value, direction);
 
+  const trackData = [{ name: "track", value: 100 }];
   const valueData = [{ name: "metric", value: displayValue }];
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-full h-[150px] flex items-end justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <ResponsiveContainer width="100%" height="200%">
+            <RadialBarChart
+              cx="50%"
+              cy="50%"
+              innerRadius="82%"
+              outerRadius="98%"
+              barSize={18}
+              data={trackData}
+              startAngle={180}
+              endAngle={0}
+            >
+              <PolarAngleAxis
+                type="number"
+                domain={[0, 100]}
+                angleAxisId={0}
+                tick={false}
+              />
+              <RadialBar
+                dataKey="value"
+                fill="#e5e7eb"
+                isAnimationActive={false}
+                cornerRadius={10}
+              />
+            </RadialBarChart>
+          </ResponsiveContainer>
+        </div>
+
         <ResponsiveContainer width="100%" height="200%">
           <RadialBarChart
             cx="50%"
@@ -92,7 +121,6 @@ function SemiCircleGauge({
               fill={displayColor}
               isAnimationActive
               cornerRadius={10}
-              background={{ fill: "#e5e7eb" }}
             />
           </RadialBarChart>
         </ResponsiveContainer>
