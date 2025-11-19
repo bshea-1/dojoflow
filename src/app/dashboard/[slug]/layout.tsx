@@ -25,7 +25,6 @@ export default async function DashboardLayout({
   const userFranchiseId = profile?.franchise_id as string | null | undefined;
   let assignedFranchises: { name: string; slug: string }[] = [];
 
-  // Always fetch the current franchise by slug so it can be included in the switcher
   const { data: currentFranchise } = await supabase
     .from("franchises")
     .select("name, slug")
@@ -39,7 +38,6 @@ export default async function DashboardLayout({
       .eq("profile_id", user.id);
 
     if (data) {
-      // Only include franchises that are actually linked via the assignments table
       assignedFranchises = data
         .map((item: any) => item.franchises)
         .filter((f: any) => f && f.name && f.slug)
@@ -55,12 +53,14 @@ export default async function DashboardLayout({
         (f) => f.slug === params.slug
       );
       if (!slugAllowed) {
-        // Redirect to the first assigned location
         redirect(`/dashboard/${assignedFranchises[0].slug}`);
       }
+    } else if (currentFranchise) {
+      // Fallback: no assignments found, but slug maps to a franchise
+      assignedFranchises = [currentFranchise];
     }
   } else {
-    // For non-franchisee roles, tie location to the franchise_id on the profile when possible
+    // For non-franchisee roles, tie to the franchise_id on the profile when possible
     if (userFranchiseId) {
       const { data: primaryFranchise } = await supabase
         .from("franchises")
