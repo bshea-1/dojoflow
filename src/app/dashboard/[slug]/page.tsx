@@ -142,7 +142,10 @@ export default async function DashboardOverview({ params }: { params: { slug: st
     quickStats: {
       fastToursPercent,
       overdueTasksPercent,
-      waitlistPercent
+      waitlistPercent,
+      fastToursNote: undefined,
+      overdueTasksNote: undefined,
+      waitlistNote: undefined,
     },
     childrenByStatus,
     conversionStats: {

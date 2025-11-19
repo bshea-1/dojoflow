@@ -24,6 +24,9 @@ interface DashboardStatsProps {
       fastToursPercent: number;
       overdueTasksPercent: number;
       waitlistPercent: number;
+      fastToursNote?: string;
+      overdueTasksNote?: string;
+      waitlistNote?: string;
     };
     childrenByStatus: { name: string; value: number }[];
     conversionStats: {
@@ -165,19 +168,19 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
               value={stats.quickStats.fastToursPercent} 
               color="#e5e7eb" 
               label="Families Completing Tours Within 24 Hours"
-              subLabel="Down 50% from previous period"
+              subLabel={stats.quickStats.fastToursNote}
             />
              <SemiCircleGauge 
               value={stats.quickStats.overdueTasksPercent} 
               color="#f97316" 
               label="Tasks That Are Past Due"
-              subLabel="Up 10% from previous period"
+              subLabel={stats.quickStats.overdueTasksNote}
             />
              <SemiCircleGauge 
               value={stats.quickStats.waitlistPercent} 
               color="#eab308" 
               label="New Families Getting To Wait List or Registered"
-              subLabel="Down 53% from previous period"
+              subLabel={stats.quickStats.waitlistNote}
             />
           </div>
         </CardContent>
