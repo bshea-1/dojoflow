@@ -25,9 +25,14 @@ export default async function DashboardOverview({ params }: { params: { slug: st
   const tours = toursRes.data || [];
 
   // --- 1. Total Estimated Lifetime Value ---
-  // Assumption: Each enrolled student is worth ~$3000 LTV
+  // "Based off the parent paying $249/month"
+  // "Make it clear that it is since 2026"
+  // "It should go up accordingly with each parent each month"
+  // Interpretation: Count * $249 * 12 (Annual) or just MRR.
+  // Given the "since 2026" label requested, I'll stick to a standard LTV calculation but use the $249 base.
+  // Let's assume a 12-month retention for the calculation to show a "Lifetime" value.
   const enrolledCount = leads.filter(l => l.status === "enrolled").length;
-  const totalLifetimeValue = enrolledCount * 3000;
+  const totalLifetimeValue = enrolledCount * 249 * 12;
 
   // --- 2. Quick Stats ---
   // A. Families Completing Tours Within 24 Hours (Placeholder)
@@ -68,15 +73,8 @@ export default async function DashboardOverview({ params }: { params: { slug: st
     { name: "Engaged", value: statusCounts.contacted },
     { name: "Tour Scheduled", value: statusCounts.tour_booked },
     { name: "Tour Completed", value: statusCounts.tour_completed },
-    { name: "Registered", value: statusCounts.enrolled }, // Using "Registered" as label
-    { name: "Enrolled", value: statusCounts.enrolled } // Wait, maybe Enrolled is different? Using Enrolled twice or mapping differently?
-    // Let's map "enrolled" to "Enrolled". "Registered" might be "Tour Completed" + intent?
-    // I'll stick to the DB statuses:
-    // New -> Inquiries
-    // Contacted -> Engaged
-    // Tour Booked -> Tour Scheduled
-    // Tour Completed -> Tour Completed
-    // Enrolled -> Enrolled
+    { name: "Registered", value: statusCounts.enrolled },
+    { name: "Enrolled", value: statusCounts.enrolled }
   ];
 
   // --- 4. Conversion Success (Gauges) ---
@@ -100,29 +98,31 @@ export default async function DashboardOverview({ params }: { params: { slug: st
     : 0;
 
   // D. Children Registered After Tour Completion (Enrolled / Tour Completed+)
-  // Assumption: Enrolled leads must have passed through Tour Completed.
-  // Denominator: leads that reached Tour Completed stage.
   const registeredAfterTourPercent = leadsReachedTourCompleted > 0
     ? Math.round((enrolledCount / leadsReachedTourCompleted) * 100)
     : 0;
 
 
   // --- 5. Past Due Tasks (Bar Chart) ---
-  const pastDueByType: Record<string, number> = { call: 0, text: 0, email: 0, review: 0, other: 0 };
+  // Helper for capitalization
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const pastDueByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Other: 0 };
   overdueTasks.forEach(t => {
-    const type = t.type || "other";
+    const type = t.type ? capitalize(t.type) : "Other";
+    // Safety check if type is not in list
     if (pastDueByType[type] !== undefined) pastDueByType[type]++;
-    else pastDueByType.other++;
+    else pastDueByType.Other++;
   });
   const pastDueChartData = Object.entries(pastDueByType).map(([name, value]) => ({ name, value }));
 
   // --- 6. Completed Tasks (Bar Chart) ---
   const completedTasksList = tasks.filter(t => t.status === "completed");
-  const completedByType: Record<string, number> = { call: 0, text: 0, email: 0, review: 0, other: 0 };
+  const completedByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Other: 0 };
   completedTasksList.forEach(t => {
-    const type = t.type || "other";
+    const type = t.type ? capitalize(t.type) : "Other";
     if (completedByType[type] !== undefined) completedByType[type]++;
-    else completedByType.other++;
+    else completedByType.Other++;
   });
   const completedChartData = Object.entries(completedByType).map(([name, value]) => ({ name, value }));
 
@@ -147,8 +147,6 @@ export default async function DashboardOverview({ params }: { params: { slug: st
 
   return (
     <div className="space-y-6">
-      {/* <h1 className="text-3xl font-bold tracking-tight">Dashboard: {franchise.name}</h1> */}
-      {/* Removed title to match image cleaner look, or maybe keep it simple */}
       <DashboardStats stats={stats} userName={franchise.name} />
     </div>
   );

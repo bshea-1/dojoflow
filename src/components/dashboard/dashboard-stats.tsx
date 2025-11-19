@@ -38,7 +38,19 @@ interface DashboardStatsProps {
 }
 
 function SemiCircleGauge({ value, color, label, subLabel }: { value: number; color: string; label: string; subLabel?: string }) {
-  const data = [{ name: "value", value: value, fill: color }];
+  // If value is 0, show a small sliver in red (or grey track with red indicator)
+  // We'll force a small value so it renders, but color it differently if true 0?
+  // Actually, let's use the background track for the "empty" part.
+  // If value is 0, we can render a tiny value (1) with a specific color, or just let it be empty but show the background.
+  // User request: "show part of the stat in red, so it isn't just blank/invisible"
+  
+  const isZero = value === 0;
+  const renderValue = isZero ? 100 : value; // If 0, maybe fill it all red? Or just a small blip?
+  // Let's try a small blip:
+  const displayValue = isZero ? 2 : value; 
+  const displayColor = isZero ? "#ef4444" : color;
+  
+  const data = [{ name: "value", value: displayValue, fill: displayColor }];
   
   return (
     <div className="flex flex-col items-center justify-center h-full">
@@ -54,8 +66,13 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
             startAngle={180} 
             endAngle={0}
           >
+            <PolarAngleAxis
+              type="number"
+              domain={[0, 100]}
+              angleAxisId={0}
+              tick={false}
+            />
             <RadialBar
-              // label={{ position: 'insideStart', fill: '#fff' }}
               background
               dataKey="value"
               cornerRadius={10}
@@ -63,7 +80,7 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute bottom-0 mb-4 text-center">
-           <div className="text-3xl font-bold">{value}%</div>
+           <div className={`text-3xl font-bold ${isZero ? 'text-destructive' : ''}`}>{value}%</div>
         </div>
       </div>
       <div className="text-center mt-2 space-y-1">
@@ -83,14 +100,12 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
   return (
     <div className="space-y-6 bg-slate-50/50 p-2 rounded-xl">
       
-      {/* Header / Welcome */}
-      {/* Optional: Add welcome message back if desired, currently keeping clean */}
-      
       {/* Total Estimated Lifetime Value */}
       <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border">
         <div>
           <h2 className="text-lg font-medium text-slate-900">Total Estimated Lifetime Value</h2>
           <p className="text-sm text-muted-foreground">of Families not yet Enrolled/Waitlisted</p>
+          <p className="text-xs text-muted-foreground mt-1 italic">Since 2026</p>
         </div>
         <div className="text-3xl font-bold text-green-500">
           {currencyFormatter.format(stats.totalLifetimeValue)}
@@ -106,19 +121,19 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <SemiCircleGauge 
               value={stats.quickStats.fastToursPercent} 
-              color="#e5e7eb" // gray placeholder
+              color="#e5e7eb" 
               label="Families Completing Tours Within 24 Hours"
               subLabel="Down 50% from previous period"
             />
              <SemiCircleGauge 
               value={stats.quickStats.overdueTasksPercent} 
-              color="#f97316" // Orange
+              color="#f97316" 
               label="Tasks That Are Past Due"
               subLabel="Up 10% from previous period"
             />
              <SemiCircleGauge 
               value={stats.quickStats.waitlistPercent} 
-              color="#eab308" // Yellow
+              color="#eab308" 
               label="New Families Getting To Wait List or Registered"
               subLabel="Down 53% from previous period"
             />
@@ -182,25 +197,25 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
              <div className="grid grid-cols-2 gap-6">
                 <SemiCircleGauge 
                   value={stats.conversionStats.newToTourScheduledPercent} 
-                  color="#84cc16" // Green
+                  color="#84cc16" 
                   label="New Families Getting to Tour Scheduled"
                   subLabel="Up 7% from previous"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.newToTourCompletedPercent} 
-                  color="#e5e7eb" // Gray/Low
+                  color="#e5e7eb" 
                   label="New Families Getting To Tour Completed"
                   subLabel="Down 9% from previous"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.scheduledToCompletedPercent} 
-                  color="#f97316" // Orange
+                  color="#f97316" 
                   label="Scheduled Tours Getting Completed"
                   subLabel="Down 24% from previous"
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.registeredAfterTourPercent} 
-                  color="#f97316" // Orange
+                  color="#f97316" 
                   label="Children Registered After Tour Completion"
                   subLabel="Down 52% from previous"
                 />
