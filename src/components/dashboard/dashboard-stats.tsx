@@ -37,28 +37,37 @@ interface DashboardStatsProps {
   };
 }
 
-function SemiCircleGauge({ value, color, label, subLabel }: { value: number; color: string; label: string; subLabel?: string }) {
-  // If value is 0, we want a visible "empty" track (background) and a very small colored segment (red dot).
-  
+function SemiCircleGauge({
+  value,
+  color,
+  label,
+  subLabel,
+}: {
+  value: number;
+  color: string;
+  label: string;
+  subLabel?: string;
+}) {
   const isZero = value === 0;
-  // If 0, we display a small value (2) to make a visible 'dot'
-  const displayValue = isZero ? 2 : value; 
-  const displayColor = isZero ? "#ef4444" : color; // Red if 0%, else the passed color
+  const displayValue = isZero ? 2 : value;
+  const displayColor = isZero ? "#ef4444" : color;
 
-  const data = [{ name: "value", value: displayValue, fill: displayColor }];
-  
+  const data = [
+    { name: "metric", track: 100, value: displayValue },
+  ];
+
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-full h-[150px] flex items-end justify-center overflow-hidden">
         <ResponsiveContainer width="100%" height="200%">
-          <RadialBarChart 
-            cx="50%" 
-            cy="50%" 
-            innerRadius="80%" 
-            outerRadius="100%" 
-            barSize={24} 
-            data={data} 
-            startAngle={180} 
+          <RadialBarChart
+            cx="50%"
+            cy="50%"
+            innerRadius="80%"
+            outerRadius="100%"
+            barSize={24}
+            data={data}
+            startAngle={180}
             endAngle={0}
           >
             <PolarAngleAxis
@@ -68,14 +77,21 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
               tick={false}
             />
             <RadialBar
-              background={{ fill: '#e2e8f0' }} // Darker gray for better visibility
+              dataKey="track"
+              fill="#d7dce3"
+              cornerRadius={12}
+            />
+            <RadialBar
               dataKey="value"
-              cornerRadius={12} // Rounded ends
+              fill={displayColor}
+              cornerRadius={12}
             />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute bottom-0 mb-4 text-center">
-           <div className={`text-3xl font-bold ${isZero ? 'text-destructive' : ''}`}>{value}%</div>
+          <div className={`text-3xl font-bold ${isZero ? "text-destructive" : ""}`}>
+            {value}%
+          </div>
         </div>
       </div>
       <div className="text-center mt-2 space-y-1">
