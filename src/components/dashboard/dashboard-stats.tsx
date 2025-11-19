@@ -22,10 +22,12 @@ const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =
   const clamped = Math.max(0, Math.min(100, value));
   const normalized = direction === "good-high" ? clamped : 100 - clamped;
 
-  if (normalized >= 75) return "#22c55e"; // green
-  if (normalized >= 50) return "#84cc16"; // lime
-  if (normalized >= 25) return "#facc15"; // yellow
-  return "#ef4444"; // red
+  if (normalized >= 90) return "#16a34a"; // deep green
+  if (normalized >= 75) return "#22c55e";
+  if (normalized >= 60) return "#84cc16";
+  if (normalized >= 40) return "#facc15";
+  if (normalized >= 20) return "#f97316";
+  return "#dc2626"; // red
 };
 
 interface DashboardStatsProps {
@@ -75,9 +77,9 @@ function SemiCircleGauge({
             <RadialBarChart
               cx="50%"
               cy="50%"
-              innerRadius="80%"
-              outerRadius="100%"
-              barSize={24}
+              innerRadius="82%"
+              outerRadius="98%"
+              barSize={18}
               data={trackData}
               startAngle={180}
               endAngle={0}
@@ -102,9 +104,9 @@ function SemiCircleGauge({
           <RadialBarChart
             cx="50%"
             cy="50%"
-            innerRadius="80%"
-            outerRadius="100%"
-            barSize={24}
+            innerRadius="82%"
+            outerRadius="98%"
+            barSize={18}
             data={valueData}
             startAngle={180}
             endAngle={0}
