@@ -28,11 +28,10 @@ export default async function DashboardOverview({ params }: { params: { slug: st
   // "Based off the parent paying $249/month"
   // "Make it clear that it is since 2026"
   // "It should go up accordingly with each parent each month"
-  // Interpretation: Count * $249 * 12 (Annual) or just MRR.
-  // Given the "since 2026" label requested, I'll stick to a standard LTV calculation but use the $249 base.
-  // Let's assume a 12-month retention for the calculation to show a "Lifetime" value.
-  const enrolledCount = leads.filter(l => l.status === "enrolled").length;
-  const totalLifetimeValue = enrolledCount * 249 * 12;
+  // Interpretation: Calculate value based on potential leads in the pipeline (not enrolled, not lost)
+  // Value = (Leads in pipeline) * $249 * 12 months (Annual potential)
+  const potentialLeadsCount = leads.filter(l => l.status !== "enrolled" && l.status !== "lost").length;
+  const totalLifetimeValue = potentialLeadsCount * 249 * 12;
 
   // --- 2. Quick Stats ---
   // A. Families Completing Tours Within 24 Hours (Placeholder)
