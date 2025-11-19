@@ -34,6 +34,10 @@ interface DashboardStatsProps {
       newToTourCompletedPercent: number;
       scheduledToCompletedPercent: number;
       registeredAfterTourPercent: number;
+      newToTourScheduledNote?: string;
+      newToTourCompletedNote?: string;
+      scheduledToCompletedNote?: string;
+      registeredAfterTourNote?: string;
     };
     pastDueChartData: { name: string; value: number }[];
     completedChartData: { name: string; value: number }[];
@@ -247,25 +251,25 @@ export function DashboardStats({ stats, userName }: DashboardStatsProps) {
                   value={stats.conversionStats.newToTourScheduledPercent} 
                   color="#84cc16" 
                   label="New Families Getting to Tour Scheduled"
-                  subLabel="Up 7% from previous"
+                  subLabel={stats.conversionStats.newToTourScheduledNote}
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.newToTourCompletedPercent} 
                   color="#e5e7eb" 
                   label="New Families Getting To Tour Completed"
-                  subLabel="Down 9% from previous"
+                  subLabel={stats.conversionStats.newToTourCompletedNote}
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.scheduledToCompletedPercent} 
                   color="#f97316" 
                   label="Scheduled Tours Getting Completed"
-                  subLabel="Down 24% from previous"
+                  subLabel={stats.conversionStats.scheduledToCompletedNote}
                 />
                 <SemiCircleGauge 
                   value={stats.conversionStats.registeredAfterTourPercent} 
                   color="#f97316" 
                   label="Children Registered After Tour Completion"
-                  subLabel="Down 52% from previous"
+                  subLabel={stats.conversionStats.registeredAfterTourNote}
                 />
              </div>
           </CardContent>

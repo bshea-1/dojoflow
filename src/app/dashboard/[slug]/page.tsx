@@ -152,7 +152,7 @@ export default async function DashboardOverview({ params }: { params: { slug: st
       newToTourScheduledPercent,
       newToTourCompletedPercent,
       scheduledToCompletedPercent,
-      registeredAfterTourPercent
+      registeredAfterTourPercent,
     },
     pastDueChartData,
     completedChartData
