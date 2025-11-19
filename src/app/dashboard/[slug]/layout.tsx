@@ -24,6 +24,13 @@ export default async function DashboardLayout({
   const userRole = profile?.role || "sensei";
   let assignedFranchises: { name: string; slug: string }[] = [];
 
+  // Always fetch the current franchise by slug so it can be included in the switcher
+  const { data: currentFranchise } = await supabase
+    .from("franchises")
+    .select("name, slug")
+    .eq("slug", params.slug)
+    .single();
+
   if (userRole === "franchisee") {
     const { data } = await supabase
       .from("franchise_assignments")
@@ -40,12 +47,21 @@ export default async function DashboardLayout({
           slug: f.slug as string,
         }));
     }
+
+    // Ensure the currently viewed franchise is always in the list,
+    // even if the join above failed due to missing relationship/RLS.
+    if (currentFranchise) {
+      const alreadyIncluded = assignedFranchises.some(
+        (f) => f.slug === currentFranchise.slug
+      );
+      if (!alreadyIncluded) {
+        assignedFranchises.push(currentFranchise);
+      }
+    }
   } else {
-    // For non-franchisees, they just have one location implicitly via profile or assignments
-    // We can fetch it just to display the name correctly if needed, but for now simpler logic
-    const { data: franchise } = await supabase.from("franchises").select("name, slug").eq("slug", params.slug).single();
-    if (franchise) {
-      assignedFranchises = [franchise];
+    // For non-franchisees, they just have one location implicitly; show the current one.
+    if (currentFranchise) {
+      assignedFranchises = [currentFranchise];
     }
   }
   
