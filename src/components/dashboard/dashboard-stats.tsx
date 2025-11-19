@@ -76,7 +76,6 @@ function SemiCircleGauge({ value, color, label, subLabel }: { value: number; col
               background={{ fill: '#f3f4f6' }} // Light gray track
               dataKey="value"
               cornerRadius={10} // Rounded ends for the value bar
-              clockWise
             />
           </RadialBarChart>
         </ResponsiveContainer>
