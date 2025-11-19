@@ -3,6 +3,8 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { DashboardRangePicker } from "@/components/dashboard/range-picker";
 import { differenceInHours, differenceInMonths, isPast, subDays } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 const RANGE_LABELS = {
   "7d": "Last 7 Days",
   "31d": "Last 31 Days",
@@ -85,16 +87,10 @@ export default async function DashboardOverview({
   // Calculation: For every lead that is NOT Enrolled and NOT Lost,
   // Calculate months since created_at (minimum 1 month).
   // Sum (months * $249).
-  // Lifetime value always evaluates lifetime (ignoring range filtering)
   let totalLifetimeValue = 0;
   const now = new Date();
-  
-  const lifetimeLeadsRes = await supabase
-    .from("leads")
-    .select("status, created_at")
-    .eq("franchise_id", franchise.id);
 
-  (lifetimeLeadsRes.data || []).forEach(lead => {
+  leads.forEach(lead => {
     if (lead.status !== "enrolled" && lead.status !== "lost") {
       const createdAt = new Date(lead.created_at);
       // Determine months in pipeline.

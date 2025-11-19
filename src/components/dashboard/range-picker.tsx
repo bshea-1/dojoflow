@@ -30,7 +30,7 @@ export function DashboardRangePicker({ currentRange }: DashboardRangePickerProps
 
   const handleChange = (nextValue: RangeKey) => {
     startTransition(() => {
-      const params = new URLSearchParams(searchParams ?? undefined);
+      const params = new URLSearchParams(searchParams?.toString());
       if (nextValue === "7d") {
         params.delete("range");
       } else {
@@ -40,6 +40,7 @@ export function DashboardRangePicker({ currentRange }: DashboardRangePickerProps
       const queryString = params.toString();
       const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
       router.replace(nextUrl, { scroll: false });
+      router.refresh();
     });
   };
 
