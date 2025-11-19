@@ -18,16 +18,45 @@ import { MoreVertical } from "lucide-react";
 
 type GaugeDirection = "good-high" | "good-low";
 
-const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") => {
+const blendColor = (
+  value: number,
+  direction: GaugeDirection = "good-high",
+  stops: { offset: number; color: string }[]
+) => {
   const clamped = Math.max(0, Math.min(100, value));
   const normalized = direction === "good-high" ? clamped : 100 - clamped;
 
-  if (normalized >= 90) return "#15803d";
-  if (normalized >= 75) return "#22c55e";
-  if (normalized >= 50) return "#a3e635";
-  if (normalized >= 25) return "#facc15";
-  return "#dc2626";
+  for (let i = 0; i < stops.length - 1; i++) {
+    const start = stops[i];
+    const end = stops[i + 1];
+    if (normalized >= start.offset && normalized <= end.offset) {
+      const range = end.offset - start.offset;
+      const progress = range === 0 ? 0 : (normalized - start.offset) / range;
+      const interpolate = (a: number, b: number) => Math.round(a + (b - a) * progress);
+      const parseHex = (hex: string) => hex.match(/[a-f0-9]{2}/gi)?.map((h) => parseInt(h, 16)) ?? [0, 0, 0];
+
+      const startRgb = parseHex(start.color.replace("#", ""));
+      const endRgb = parseHex(end.color.replace("#", ""));
+
+      const r = interpolate(startRgb[0], endRgb[0]);
+      const g = interpolate(startRgb[1], endRgb[1]);
+      const b = interpolate(startRgb[2], endRgb[2]);
+
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+  }
+
+  return stops[stops.length - 1].color;
 };
+
+const GAUGE_STOPS: { offset: number; color: string }[] = [
+  { offset: 0, color: "#dc2626" },
+  { offset: 33, color: "#f97316" },
+  { offset: 66, color: "#facc15" },
+  { offset: 100, color: "#16a34a" },
+];
+const getGaugeColor = (value: number, direction: GaugeDirection = "good-high") =>
+  blendColor(value, direction, GAUGE_STOPS);
 
 interface DashboardStatsProps {
   userName?: string;
