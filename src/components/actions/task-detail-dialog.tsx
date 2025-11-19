@@ -69,27 +69,39 @@ const OUTCOME_OPTIONS = [
   "Other"
 ];
 
+interface TaskDetailDialogProps {
+  task: Task;
+  franchiseSlug: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaveAndAdd?: () => void;
+}
+
 export function TaskDetailDialog({ 
   task, 
   franchiseSlug, 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onSaveAndAdd
 }: TaskDetailDialogProps) {
   const queryClient = useQueryClient();
   const [outcome, setOutcome] = useState<string>(task.outcome || "");
   const [notes, setNotes] = useState<string>(task.description || "");
 
   const updateStatusMutation = useMutation({
-    mutationFn: async (status: "pending" | "completed") => {
+    mutationFn: async ({ status }: { status: "pending" | "completed"; closeAfter?: boolean }) => {
       await updateTaskStatus(task.id, status, franchiseSlug, outcome);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", franchiseSlug] });
       if (task.lead_id) {
         queryClient.invalidateQueries({ queryKey: ["tasks", task.lead_id] });
       }
-      toast.success("Task updated");
-      onOpenChange(false);
+      toast.success("Task saved");
+      if (variables?.closeAfter) {
+        onSaveAndAdd?.();
+        onOpenChange(false);
+      }
     },
   });
 
@@ -186,23 +198,20 @@ export function TaskDetailDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          {task.status === "completed" ? (
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto"
-              onClick={() => updateStatusMutation.mutate("pending")}
-            >
-              Mark as Incomplete
-            </Button>
-          ) : (
-            <Button 
-              className="w-full sm:w-auto"
-              onClick={() => updateStatusMutation.mutate("completed")}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Mark Completed
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto"
+            onClick={() => updateStatusMutation.mutate({ status: "completed" })}
+          >
+            Save Task
+          </Button>
+          <Button 
+            className="w-full sm:w-auto"
+            onClick={() => updateStatusMutation.mutate({ status: "completed", closeAfter: true })}
+          >
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Save + Add Task
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

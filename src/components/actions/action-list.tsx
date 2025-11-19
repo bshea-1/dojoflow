@@ -283,6 +283,7 @@ export function ActionList({ franchiseSlug, initialTasks }: ActionListProps) {
           franchiseSlug={franchiseSlug}
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
+          onSaveAndAdd={() => setSelectedTask(null)}
         />
       )}
     </div>
