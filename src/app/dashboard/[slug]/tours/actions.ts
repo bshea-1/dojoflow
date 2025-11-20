@@ -151,6 +151,7 @@ async function handleTourStatusChange(params: {
   const outcomeLabel =
     newTourStatus === "completed" ? "Tour Completed" : "Tour Not Completed";
 
+  // Mark the tour task as completed
   await supabase
     .from("tasks")
     .update({
@@ -159,7 +160,10 @@ async function handleTourStatusChange(params: {
     })
     .eq("tour_id", tourId);
 
-  const followUpDate = addDays(new Date(scheduledAt), 1);
+  // Calculate follow-up date as start of next day (9 AM)
+  const tourDate = new Date(scheduledAt);
+  const nextDay = addDays(tourDate, 1);
+  nextDay.setHours(9, 0, 0, 0); // Set to 9 AM the next day
 
   if (newTourStatus === "completed") {
     await createFollowUpTask({
@@ -168,7 +172,7 @@ async function handleTourStatusChange(params: {
       leadId,
       title: "Post-Tour Follow-up",
       description: "Call family to discuss enrollment options.",
-      dueDate: followUpDate,
+      dueDate: nextDay,
     });
   } else if (newTourStatus === "no-show") {
     await createFollowUpTask({
@@ -177,7 +181,7 @@ async function handleTourStatusChange(params: {
       leadId,
       title: "Tour No-Show Follow-up",
       description: "Reach out to reschedule their tour.",
-      dueDate: followUpDate,
+      dueDate: nextDay,
     });
   }
 }
@@ -397,7 +401,10 @@ export async function updateTour(
   }
 
   const scheduledAtIso = data.scheduledAt ?? existingTour.scheduled_at;
-  if (scheduledAtIso) {
+  
+  // Only update the tour task if the scheduled time changed (not just status)
+  // If status changed to completed/no-show, handleTourStatusChange will mark the task as completed
+  if (data.scheduledAt && scheduledAtIso && data.status !== "completed" && data.status !== "no-show") {
     await upsertTourTask({
       supabase,
       franchiseId: existingTour.franchise_id,
@@ -407,6 +414,7 @@ export async function updateTour(
     });
   }
 
+  // Handle status changes (completed/no-show)
   if (data.status && data.status !== existingTour.status && scheduledAtIso) {
     await handleTourStatusChange({
       supabase,

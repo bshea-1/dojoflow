@@ -82,9 +82,23 @@ export function TourDetailDialog({
     setIsSaving(true);
     try {
       const isoDate = new Date(scheduledInput).toISOString();
+      const originalDate = tour.scheduled_at 
+        ? new Date(tour.scheduled_at).toISOString() 
+        : null;
+      
+      // Only include scheduledAt if it actually changed
+      const updateData: { scheduledAt?: string; status?: TourWithGuardian["status"] } = {
+        status: status ?? "scheduled",
+      };
+      
+      // Only send scheduledAt if the date/time actually changed
+      if (isoDate !== originalDate) {
+        updateData.scheduledAt = isoDate;
+      }
+      
       const result = await updateTour(
         tour.id,
-        { scheduledAt: isoDate, status: status ?? "scheduled" },
+        updateData,
         franchiseSlug
       );
       if (result.error) {

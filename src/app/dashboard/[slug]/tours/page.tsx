@@ -14,7 +14,7 @@ export default async function ToursPage({ params }: { params: { slug: string } }
 
   if (!franchise) return <div>Franchise not found</div>;
 
-  // 2. Fetch Tours
+  // 2. Fetch Tours (only scheduled tours - filter out completed and no-show)
   const { data: tours } = await supabase
     .from("tours")
     .select(`
@@ -30,7 +30,8 @@ export default async function ToursPage({ params }: { params: { slug: string } }
         )
       )
     `)
-    .eq("franchise_id", franchise.id);
+    .eq("franchise_id", franchise.id)
+    .in("status", ["scheduled", null]); // Only show scheduled tours
 
   // 3. Fetch Leads for Dropdown (only those not yet enrolled/lost ideally, or just all active)
   const { data: leads } = await supabase
