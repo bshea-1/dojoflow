@@ -17,20 +17,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Database } from "@/types/supabase";
 
-type Tour = Database["public"]["Tables"]["tours"]["Row"] & {
-  leads: {
-    guardians: {
-      first_name: string;
-      last_name: string;
-    }[];
-  } | null; // Joined data structure might vary slightly
-};
-
 // Mock data for visualization if real data is empty
 const MOCK_HOURS = { start: 10, end: 19 }; // 10 AM to 7 PM
 
 interface CalendarViewProps {
-  tours?: any[];
+  tours?: Array<
+    Database["public"]["Tables"]["tours"]["Row"] & {
+      leads?: {
+        guardians?: Array<{
+          first_name: string | null;
+          last_name: string | null;
+          students?: Array<{
+            program_interest:
+              | Database["public"]["Enums"]["program_interest"][]
+              | null;
+          }>;
+        }>;
+      } | null;
+    }
+  >;
   onSlotSelect?: (date: Date) => void;
 }
 
@@ -105,11 +110,31 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                     className="p-1 border-b border-r h-20 relative hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() => slotTours.length === 0 && onSlotSelect?.(slotDate)}
                   >
-                    {slotTours.map(tour => (
-                      <div key={tour.id} className="bg-primary/10 text-primary border-l-2 border-primary text-[10px] p-1 rounded mb-1 truncate">
-                        Tour Booked
-                      </div>
-                    ))}
+                    {slotTours.map((tour) => {
+                      const guardian = tour.leads?.guardians?.[0];
+                      const parentName = guardian
+                        ? `${guardian.first_name ?? ""} ${guardian.last_name ?? ""}`.trim()
+                        : "Unknown Parent";
+
+                      const leadPaths = (guardian?.students || [])
+                        .flatMap((student) => student.program_interest || [])
+                        .map((path) => path?.toUpperCase())
+                        .filter(Boolean);
+
+                      const pathLabel =
+                        leadPaths.length > 0 ? leadPaths.join(", ") : "No Path";
+
+                      return (
+                        <div
+                          key={tour.id}
+                          className="bg-primary/10 text-primary border-l-2 border-primary text-[10px] p-1 rounded mb-1 truncate"
+                          title={`${parentName} • ${pathLabel}`}
+                        >
+                          <div className="font-semibold truncate">{parentName}</div>
+                          <div className="text-muted-foreground truncate">{pathLabel}</div>
+                        </div>
+                      );
+                    })}
                     {slotTours.length === 0 && onSlotSelect && (
                       <span className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">
                         {/* Tap to schedule removed */}

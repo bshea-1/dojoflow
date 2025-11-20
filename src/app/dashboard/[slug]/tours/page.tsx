@@ -20,7 +20,13 @@ export default async function ToursPage({ params }: { params: { slug: string } }
       *,
       leads (
         id,
-        guardians (first_name, last_name)
+        guardians (
+          first_name,
+          last_name,
+          students (
+            program_interest
+          )
+        )
       )
     `)
     .eq("franchise_id", franchise.id);
