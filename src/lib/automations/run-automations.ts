@@ -11,6 +11,7 @@ type AutomationAction = {
   title?: string | null;
   template?: string | null;
   message?: string | null;
+  taskType?: Database["public"]["Tables"]["tasks"]["Row"]["type"] | null;
 };
 
 type AutomationConditions = {
@@ -100,7 +101,7 @@ export async function runAutomations({
             lead_id: lead.id,
             title: action.title || `Automation Task: ${automation.name}`,
             description: action.message ?? action.template ?? null,
-            type: "other",
+            type: action.taskType ?? "other",
             status: "pending",
           });
         }

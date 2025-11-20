@@ -33,6 +33,8 @@ import {
   updateAutomation,
 } from "@/app/dashboard/[slug]/automations/actions";
 
+const TASK_TYPE_OPTIONS = ["call", "tour", "text", "review", "email", "other"] as const;
+
 // Schema
 const automationSchema = z
   .object({
@@ -54,6 +56,7 @@ const automationSchema = z
           template: z.string().optional(),
           message: z.string().optional(),
           title: z.string().optional(),
+          taskType: z.enum(TASK_TYPE_OPTIONS).optional(),
         })
       )
       .min(1, "Add at least one action"),
@@ -65,6 +68,14 @@ const automationSchema = z
           code: z.ZodIssueCode.custom,
           message: "Task title is required",
           path: ["actions", index, "title"],
+        });
+      }
+
+      if (action.type === "create_task" && !action.taskType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Select a task type",
+          path: ["actions", index, "taskType"],
         });
       }
 
@@ -93,7 +104,9 @@ const EMPTY_FORM_VALUES: AutomationFormValues = {
     lead_path: [],
     status: "",
   },
-  actions: [{ type: "send_email", message: "", template: "", title: "" }],
+  actions: [
+    { type: "send_email", message: "", template: "", title: "", taskType: undefined },
+  ],
 };
 
 export function AutomationBuilder({
@@ -135,6 +148,7 @@ export function AutomationBuilder({
                 template: action.template ?? "",
                 message: action.message ?? "",
                 title: action.title ?? "",
+                taskType: action.taskType ?? "call",
               }))
             : EMPTY_FORM_VALUES.actions,
       });
@@ -161,6 +175,7 @@ export function AutomationBuilder({
           template: action.template ?? "",
           message: action.message ?? "",
           title: action.title ?? "",
+          taskType: action.taskType ?? (action.type === "create_task" ? "call" : undefined),
         })),
         active: true,
       };
@@ -297,7 +312,13 @@ export function AutomationBuilder({
               variant="outline"
               size="sm"
               onClick={() =>
-                append({ type: "send_email", template: "", message: "", title: "" })
+                append({
+                  type: "send_email",
+                  template: "",
+                  message: "",
+                  title: "",
+                  taskType: undefined,
+                })
               }
             >
               <Plus className="mr-2 h-3 w-3" /> Add Action
@@ -330,18 +351,47 @@ export function AutomationBuilder({
 
               <div className="flex-1">
                 {form.watch(`actions.${index}.type`) === "create_task" ? (
-                   <FormField
-                   control={form.control}
-                   name={`actions.${index}.title`}
-                   render={({ field }) => (
-                     <FormItem>
-                       <FormLabel className="text-xs">Task Title</FormLabel>
-                       <FormControl>
-                         <Input className="h-8" placeholder="Call lead..." {...field} />
-                       </FormControl>
-                     </FormItem>
-                   )}
-                 />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name={`actions.${index}.taskType`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Task Type</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {TASK_TYPE_OPTIONS.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option === "tour"
+                                    ? "Tour"
+                                    : option.charAt(0).toUpperCase() + option.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`actions.${index}.title`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Task Title</FormLabel>
+                          <FormControl>
+                            <Input className="h-8" placeholder="Call lead..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 ) : (
                   <FormField
                     control={form.control}

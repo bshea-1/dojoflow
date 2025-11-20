@@ -242,7 +242,7 @@ export interface Database {
           description: string | null
           due_date: string | null
           status: 'pending' | 'completed'
-          type: 'call' | 'email' | 'text' | 'review' | 'other'
+          type: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
           outcome: string | null
           notify_email: boolean | null
           notify_sms: boolean | null
@@ -258,7 +258,7 @@ export interface Database {
           description?: string | null
           due_date?: string | null
           status?: 'pending' | 'completed'
-          type?: 'call' | 'email' | 'text' | 'review' | 'other'
+          type?: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
           outcome?: string | null
           notify_email?: boolean | null
           notify_sms?: boolean | null
@@ -274,7 +274,7 @@ export interface Database {
           description?: string | null
           due_date?: string | null
           status?: 'pending' | 'completed'
-          type?: 'call' | 'email' | 'text' | 'review' | 'other'
+          type?: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
           outcome?: string | null
           notify_email?: boolean | null
           notify_sms?: boolean | null

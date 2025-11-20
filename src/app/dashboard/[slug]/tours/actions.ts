@@ -5,12 +5,15 @@ import { BookTourSchema, programLeadOptions } from "@/lib/schemas/book-tour";
 import { revalidatePath } from "next/cache";
 import { getDay } from "date-fns";
 import { runAutomations } from "@/lib/automations/run-automations";
+import { Database } from "@/types/supabase";
 
 // Helper to parse time string "HH:mm" to hours
 function parseTime(timeStr: string) {
   const [hours] = timeStr.split(":").map(Number);
   return hours;
 }
+
+type TourStatus = Database["public"]["Tables"]["tours"]["Row"]["status"];
 
 export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   const supabase = createClient();
@@ -162,7 +165,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       title: "Tour Scheduled",
       description: `Tour scheduled for ${scheduledDate.toLocaleDateString()} at ${scheduledDate.toLocaleTimeString()}`,
       due_date: scheduledDate.toISOString(),
-      type: "other",
+      type: "tour",
       status: "pending"
     });
     
@@ -187,5 +190,52 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   
+  return { success: true };
+}
+
+export async function updateTour(
+  tourId: string,
+  data: { scheduledAt?: string; status?: TourStatus },
+  franchiseSlug: string
+) {
+  const supabase = createClient();
+
+  const updates: Record<string, any> = {};
+  if (data.scheduledAt) {
+    updates.scheduled_at = data.scheduledAt;
+  }
+  if (data.status) {
+    updates.status = data.status;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { success: true };
+  }
+
+  const { error } = await supabase
+    .from("tours")
+    .update(updates)
+    .eq("id", tourId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  return { success: true };
+}
+
+export async function deleteTour(tourId: string, franchiseSlug: string) {
+  const supabase = createClient();
+
+  const { error } = await supabase.from("tours").delete().eq("id", tourId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
 }

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { CalendarView } from "@/components/tours/calendar-view";
 import { BookTourDialog } from "@/components/tours/book-tour-dialog";
+import { TourDetailDialog } from "@/components/tours/tour-detail-dialog";
 import { Button } from "@/components/ui/button";
+import { TourWithGuardian } from "@/types/tours";
 
 interface LeadOption {
   id: string;
@@ -13,12 +15,14 @@ interface LeadOption {
 interface ToursClientProps {
   franchiseSlug: string;
   leads: LeadOption[];
-  tours: any[];
+  tours: TourWithGuardian[];
 }
 
 export function ToursClient({ franchiseSlug, leads, tours }: ToursClientProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [selectedTour, setSelectedTour] = useState<TourWithGuardian | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const openDialog = (slot?: Date | null) => {
     if (slot) {
@@ -26,7 +30,12 @@ export function ToursClient({ franchiseSlug, leads, tours }: ToursClientProps) {
     } else {
       setSelectedSlot(null);
     }
-    setDialogOpen(true);
+    setBookingOpen(true);
+  };
+
+  const handleTourClick = (tour: TourWithGuardian) => {
+    setSelectedTour(tour);
+    setDetailOpen(true);
   };
 
   return (
@@ -41,9 +50,9 @@ export function ToursClient({ franchiseSlug, leads, tours }: ToursClientProps) {
       <BookTourDialog
         franchiseSlug={franchiseSlug}
         leads={leads}
-        open={dialogOpen}
+        open={bookingOpen}
         onOpenChange={(open) => {
-          setDialogOpen(open);
+          setBookingOpen(open);
           if (!open) {
             setSelectedSlot(null);
           }
@@ -51,8 +60,24 @@ export function ToursClient({ franchiseSlug, leads, tours }: ToursClientProps) {
         initialSlot={selectedSlot ?? undefined}
       />
 
+      <TourDetailDialog
+        tour={selectedTour}
+        open={detailOpen}
+        franchiseSlug={franchiseSlug}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) {
+            setSelectedTour(null);
+          }
+        }}
+      />
+
       <div className="flex-1 h-[600px]">
-        <CalendarView tours={tours || []} onSlotSelect={(date) => openDialog(date)} />
+        <CalendarView
+          tours={tours || []}
+          onSlotSelect={(date) => openDialog(date)}
+          onTourClick={handleTourClick}
+        />
       </div>
     </div>
   );

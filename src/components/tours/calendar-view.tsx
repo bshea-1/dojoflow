@@ -15,31 +15,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Database } from "@/types/supabase";
+import { TourWithGuardian } from "@/types/tours";
 
 // Mock data for visualization if real data is empty
 const MOCK_HOURS = { start: 10, end: 19 }; // 10 AM to 7 PM
 
 interface CalendarViewProps {
-  tours?: Array<
-    Database["public"]["Tables"]["tours"]["Row"] & {
-      leads?: {
-        guardians?: Array<{
-          first_name: string | null;
-          last_name: string | null;
-          students?: Array<{
-            program_interest:
-              | Database["public"]["Enums"]["program_interest"][]
-              | null;
-          }>;
-        }>;
-      } | null;
-    }
-  >;
+  tours?: TourWithGuardian[];
   onSlotSelect?: (date: Date) => void;
+  onTourClick?: (tour: TourWithGuardian) => void;
 }
 
-export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
+export function CalendarView({
+  tours = [],
+  onSlotSelect,
+  onTourClick,
+}: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday start
@@ -110,7 +101,8 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                     className="p-1 border-b border-r min-h-[5rem] relative hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() => slotTours.length === 0 && onSlotSelect?.(slotDate)}
                   >
-                    <div className="flex flex-col gap-1">
+                    {slotTours.length > 0 && (
+                      <div className="flex flex-col gap-1">
                     {slotTours.map((tour) => {
                       const guardian = tour.leads?.guardians?.[0];
                       const parentName = guardian
@@ -126,7 +118,7 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                       const pathLabel = hasJuniorPath ? "JRs" : "Gamebuilding Session";
 
                       const cardClasses = cn(
-                        "border rounded p-2 text-[10px] truncate",
+                        "border rounded p-2 text-[10px] truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary",
                         hasJuniorPath
                           ? "bg-purple-100 text-purple-700 border-purple-400"
                           : "bg-primary/10 text-primary border-primary"
@@ -137,13 +129,26 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                           key={tour.id}
                           className={cardClasses}
                           title={`${parentName} • ${pathLabel}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onTourClick?.(tour);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onTourClick?.(tour);
+                            }
+                          }}
                         >
                           <div className="font-semibold truncate">{parentName}</div>
                           <div className="text-muted-foreground truncate">{pathLabel}</div>
                         </div>
                       );
                     })}
-                    </div>
+                      </div>
+                    )}
                     {slotTours.length === 0 && onSlotSelect && (
                       <span className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">
                         {/* Tap to schedule removed */}

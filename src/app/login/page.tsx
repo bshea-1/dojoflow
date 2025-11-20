@@ -2,10 +2,24 @@ import { login } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image"; // Assuming we might use an image, but for now CSS styling
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams?: {
+    error?: string;
+  };
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const errorMessage = searchParams?.error ?? "";
+
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {/* Left Side - Branding */}
@@ -44,6 +58,14 @@ export default function LoginPage() {
           </CardHeader>
           <form action={login}>
             <CardContent className="space-y-4">
+              {errorMessage && (
+                <div
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                  role="alert"
+                >
+                  {decodeURIComponent(errorMessage)}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input 
@@ -65,7 +87,8 @@ export default function LoginPage() {
                   name="password" 
                   type="password" 
                   required 
-                  className="h-11"
+                  className={`h-11 ${errorMessage ? "border-red-300 focus-visible:ring-red-500" : ""}`}
+                  aria-invalid={!!errorMessage}
                 />
               </div>
             </CardContent>
