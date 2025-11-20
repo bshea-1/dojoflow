@@ -63,7 +63,7 @@ export function LeadDetailDialog({
 }: LeadDetailDialogProps) {
   const queryClient = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
+  const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "tour" | "other">("call");
   const [newTaskDate, setNewTaskDate] = useState("");
   const [notifyEmail, setNotifyEmail] = useState(false);
   const [notifySms, setNotifySms] = useState(false);
@@ -157,6 +157,7 @@ export function LeadDetailDialog({
       case "email": return <Mail className="h-4 w-4" />;
       case "text": return <MessageSquare className="h-4 w-4" />;
       case "review": return <User className="h-4 w-4" />;
+      case "tour": return <Calendar className="h-4 w-4" />;
       default: return <Circle className="h-4 w-4" />;
     }
   };
@@ -186,6 +187,7 @@ export function LeadDetailDialog({
                   <SelectItem value="contacted">Contacted</SelectItem>
                   <SelectItem value="tour_booked">Tour Booked</SelectItem>
                   <SelectItem value="tour_completed">Tour Completed</SelectItem>
+                  <SelectItem value="tour_not_completed">Tour Not Completed</SelectItem>
                   <SelectItem value="enrolled">Enrolled</SelectItem>
                   <SelectItem value="lost">Lost</SelectItem>
                 </SelectContent>
@@ -238,6 +240,7 @@ export function LeadDetailDialog({
                           <SelectItem value="email">Email</SelectItem>
                           <SelectItem value="text">Text</SelectItem>
                           <SelectItem value="review">Review</SelectItem>
+                          <SelectItem value="tour">Tour</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>

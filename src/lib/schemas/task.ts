@@ -4,7 +4,7 @@ export const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   dueDate: z.date().optional(),
-  type: z.enum(["call", "email", "text", "review", "other"]).default("other"),
+  type: z.enum(["call", "email", "text", "review", "tour", "other"]).default("other"),
   leadId: z.string().uuid().optional(),
   notifyEmail: z.boolean().default(false),
   notifySms: z.boolean().default(false),

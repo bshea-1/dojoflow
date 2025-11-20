@@ -54,7 +54,7 @@ interface ActionListProps {
 export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: ActionListProps) {
   const queryClient = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "other">("call");
+  const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "tour" | "other">("call");
   const [newTaskDate, setNewTaskDate] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [notifyEmail, setNotifyEmail] = useState(false);
@@ -97,11 +97,18 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "call": return <Phone className="h-4 w-4" />;
-      case "email": return <Mail className="h-4 w-4" />;
-      case "text": return <MessageSquare className="h-4 w-4" />;
-      case "review": return <User className="h-4 w-4" />;
-      default: return <Circle className="h-4 w-4" />;
+      case "call":
+        return <Phone className="h-4 w-4" />;
+      case "email":
+        return <Mail className="h-4 w-4" />;
+      case "text":
+        return <MessageSquare className="h-4 w-4" />;
+      case "review":
+        return <User className="h-4 w-4" />;
+      case "tour":
+        return <Calendar className="h-4 w-4" />;
+      default:
+        return <Circle className="h-4 w-4" />;
     }
   };
 
@@ -204,6 +211,7 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="text">Text</SelectItem>
                   <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="tour">Tour</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>

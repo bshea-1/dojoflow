@@ -103,6 +103,7 @@ export async function runAutomations({
             description: action.message ?? action.template ?? null,
             type: action.taskType ?? "other",
             status: "pending",
+            tour_id: null,
           });
         }
         await supabase.from("automation_logs").insert({

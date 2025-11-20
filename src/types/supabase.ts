@@ -88,7 +88,7 @@ export interface Database {
         Row: {
           id: string
           franchise_id: string
-          status: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'enrolled' | 'lost' | null
+          status: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'tour_not_completed' | 'enrolled' | 'lost' | null
           source: string | null
           notes: string | null
           created_at: string
@@ -97,7 +97,7 @@ export interface Database {
         Insert: {
           id?: string
           franchise_id: string
-          status?: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'enrolled' | 'lost' | null
+          status?: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'tour_not_completed' | 'enrolled' | 'lost' | null
           source?: string | null
           notes?: string | null
           created_at?: string
@@ -106,7 +106,7 @@ export interface Database {
         Update: {
           id?: string
           franchise_id?: string
-          status?: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'enrolled' | 'lost' | null
+          status?: 'new' | 'contacted' | 'tour_booked' | 'tour_completed' | 'tour_not_completed' | 'enrolled' | 'lost' | null
           source?: string | null
           notes?: string | null
           created_at?: string
@@ -243,6 +243,7 @@ export interface Database {
           due_date: string | null
           status: 'pending' | 'completed'
           type: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
+          tour_id: string | null
           outcome: string | null
           notify_email: boolean | null
           notify_sms: boolean | null
@@ -259,6 +260,7 @@ export interface Database {
           due_date?: string | null
           status?: 'pending' | 'completed'
           type?: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
+          tour_id?: string | null
           outcome?: string | null
           notify_email?: boolean | null
           notify_sms?: boolean | null
@@ -275,6 +277,7 @@ export interface Database {
           due_date?: string | null
           status?: 'pending' | 'completed'
           type?: 'call' | 'email' | 'text' | 'review' | 'tour' | 'other'
+          tour_id?: string | null
           outcome?: string | null
           notify_email?: boolean | null
           notify_sms?: boolean | null

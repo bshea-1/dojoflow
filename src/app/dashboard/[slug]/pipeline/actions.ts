@@ -37,8 +37,9 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
     });
 
     if (newStatus === "tour_booked" || newStatus === "tour_completed") {
+      const specificTrigger = newStatus === "tour_completed" ? "tour_completed" : "tour_booked";
       await runAutomations({
-        trigger: newStatus,
+        trigger: specificTrigger,
         franchiseId: leadRecord.franchise_id,
         leadId,
         context: automationContext,

@@ -271,6 +271,8 @@ export function AutomationBuilder({
                      <SelectItem value="contacted">Contacted</SelectItem>
                      <SelectItem value="tour_booked">Tour Booked</SelectItem>
                      <SelectItem value="tour_completed">Tour Completed</SelectItem>
+                    <SelectItem value="tour_not_completed">Tour Not Completed</SelectItem>
+                     <SelectItem value="tour_not_completed">Tour Not Completed</SelectItem>
                      <SelectItem value="enrolled">Enrolled</SelectItem>
                      <SelectItem value="lost">Lost</SelectItem>
                    </SelectContent>

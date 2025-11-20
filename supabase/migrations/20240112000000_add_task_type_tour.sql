@@ -11,3 +11,7 @@ BEGIN
     END IF;
 END $$;
 
+-- Link tasks to tours for better automation control
+ALTER TABLE tasks
+    ADD COLUMN IF NOT EXISTS tour_id UUID REFERENCES tours(id) ON DELETE CASCADE;
+

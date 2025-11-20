@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ToursClient } from "@/components/tours/tours-client";
+import { TourWithGuardian } from "@/types/tours";
 
 export default async function ToursPage({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -53,7 +54,7 @@ export default async function ToursPage({ params }: { params: { slug: string } }
     <ToursClient
       franchiseSlug={params.slug}
       leads={leadOptions}
-      tours={tours || []}
+      tours={(tours as TourWithGuardian[]) || []}
     />
   );
 }

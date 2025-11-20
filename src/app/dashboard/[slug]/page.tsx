@@ -135,6 +135,7 @@ export default async function DashboardOverview({
     contacted: 0,
     tour_booked: 0,
     tour_completed: 0,
+    tour_not_completed: 0,
     enrolled: 0,
     lost: 0
   };
@@ -151,12 +152,15 @@ export default async function DashboardOverview({
     { name: "Engaged", value: statusCounts.contacted },
     { name: "Tour Scheduled", value: statusCounts.tour_booked },
     { name: "Tour Completed", value: statusCounts.tour_completed },
+    { name: "Tour Not Completed", value: statusCounts.tour_not_completed },
     { name: "Enrolled", value: statusCounts.enrolled }
   ];
 
   // --- 4. Conversion Success (Gauges) ---
   // A. New Families Getting to Tour Scheduled (Tour Booked+ / Total)
-  const leadsReachedTourBooked = leads.filter(l => ["tour_booked", "tour_completed", "enrolled"].includes(l.status || "")).length;
+  const leadsReachedTourBooked = leads.filter(l =>
+    ["tour_booked", "tour_completed", "tour_not_completed", "enrolled"].includes(l.status || "")
+  ).length;
   const newToTourScheduledPercent = totalLeads > 0
     ? Math.round((leadsReachedTourBooked / totalLeads) * 100)
     : 0;
@@ -184,7 +188,7 @@ export default async function DashboardOverview({
   // Helper for capitalization
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  const pastDueByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Other: 0 };
+  const pastDueByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Tour: 0, Other: 0 };
   overdueTasks.forEach(t => {
     const type = t.type ? capitalize(t.type) : "Other";
     // Safety check if type is not in list
@@ -195,7 +199,7 @@ export default async function DashboardOverview({
 
   // --- 6. Completed Tasks (Bar Chart) ---
   const completedTasksList = tasks.filter(t => t.status === "completed");
-  const completedByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Other: 0 };
+  const completedByType: Record<string, number> = { Call: 0, Text: 0, Email: 0, Review: 0, Tour: 0, Other: 0 };
   completedTasksList.forEach(t => {
     const type = t.type ? capitalize(t.type) : "Other";
     if (completedByType[type] !== undefined) completedByType[type]++;

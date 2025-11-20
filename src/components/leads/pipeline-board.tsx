@@ -30,6 +30,7 @@ const COLUMNS: { id: LeadStatus; title: string }[] = [
   { id: "contacted", title: "Contacted" },
   { id: "tour_booked", title: "Tour Booked" },
   { id: "tour_completed", title: "Tour Completed" },
+  { id: "tour_not_completed", title: "Tour Not Completed" },
   { id: "enrolled", title: "Enrolled" },
   { id: "lost", title: "Lost" },
 ];

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { BookTourSchema, programLeadOptions } from "@/lib/schemas/book-tour";
 import { revalidatePath } from "next/cache";
-import { getDay } from "date-fns";
+import { addDays, format, getDay } from "date-fns";
 import { runAutomations } from "@/lib/automations/run-automations";
 import { Database } from "@/types/supabase";
 
@@ -14,6 +14,142 @@ function parseTime(timeStr: string) {
 }
 
 type TourStatus = Database["public"]["Tables"]["tours"]["Row"]["status"];
+
+type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
+
+async function upsertTourTask(params: {
+  supabase: ReturnType<typeof createClient>;
+  franchiseId: string;
+  leadId: string;
+  tourId: string;
+  scheduledAt: string;
+}) {
+  const { supabase, franchiseId, leadId, tourId, scheduledAt } = params;
+  const friendlyDate = format(new Date(scheduledAt), "MMM d, yyyy h:mm a");
+  const description = `Tour scheduled for ${friendlyDate}`;
+
+  const { data: existingTask } = await supabase
+    .from("tasks")
+    .select("id, status")
+    .eq("tour_id", tourId)
+    .maybeSingle();
+
+  if (existingTask) {
+    await supabase
+      .from("tasks")
+      .update({
+        due_date: scheduledAt,
+        description,
+      })
+      .eq("id", existingTask.id);
+  } else {
+    await supabase.from("tasks").insert({
+      franchise_id: franchiseId,
+      lead_id: leadId,
+      tour_id: tourId,
+      title: "Tour Scheduled",
+      description,
+      due_date: scheduledAt,
+      type: "tour",
+      status: "pending",
+    });
+  }
+}
+
+async function createFollowUpTask(params: {
+  supabase: ReturnType<typeof createClient>;
+  franchiseId: string;
+  leadId: string;
+  title: string;
+  description: string;
+  dueDate: Date;
+}) {
+  const { supabase, franchiseId, leadId, title, description, dueDate } = params;
+  await supabase.from("tasks").insert({
+    franchise_id: franchiseId,
+    lead_id: leadId,
+    title,
+    description,
+    due_date: dueDate.toISOString(),
+    type: "call",
+    status: "pending",
+  });
+}
+
+async function handleTourStatusChange(params: {
+  supabase: ReturnType<typeof createClient>;
+  tourId: string;
+  leadId: string;
+  franchiseId: string;
+  newTourStatus: TourStatus;
+  scheduledAt: string;
+}) {
+  const { supabase, tourId, leadId, franchiseId, newTourStatus, scheduledAt } =
+    params;
+
+  if (!leadId) return;
+
+  let leadStatusUpdate: LeadStatus | undefined;
+  if (newTourStatus === "completed") {
+    leadStatusUpdate = "tour_completed";
+  } else if (newTourStatus === "no-show") {
+    leadStatusUpdate = "tour_not_completed";
+  }
+
+  if (leadStatusUpdate) {
+    await supabase
+      .from("leads")
+      .update({ status: leadStatusUpdate })
+      .eq("id", leadId);
+
+    await runAutomations({
+      trigger: "status_changed",
+      franchiseId,
+      leadId,
+      context: { newStatus: leadStatusUpdate },
+    });
+
+    if (leadStatusUpdate === "tour_completed") {
+      await runAutomations({
+        trigger: "tour_completed",
+        franchiseId,
+        leadId,
+        context: { newStatus: leadStatusUpdate },
+      });
+    }
+  }
+
+  const outcomeLabel =
+    newTourStatus === "completed" ? "Tour Completed" : "Tour Not Completed";
+
+  await supabase
+    .from("tasks")
+    .update({
+      status: "completed",
+      outcome: outcomeLabel,
+    })
+    .eq("tour_id", tourId);
+
+  if (newTourStatus === "completed") {
+    await createFollowUpTask({
+      supabase,
+      franchiseId,
+      leadId,
+      title: "Post-Tour Follow-up",
+      description: "Call family to discuss enrollment options.",
+      dueDate: addDays(new Date(scheduledAt), 1),
+    });
+  } else if (newTourStatus === "no-show") {
+    await createFollowUpTask({
+      supabase,
+      franchiseId,
+      leadId,
+      title: "Tour No-Show Follow-up",
+      description: "Reach out to reschedule their tour.",
+      dueDate: new Date(),
+    });
+  }
+}
 
 export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   const supabase = createClient();
@@ -133,18 +269,28 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   }
 
   // 3. Create Tour
-  const { error: tourError } = await supabase
+  const { data: tour, error: tourError } = await supabase
     .from("tours")
     .insert({
       franchise_id: franchise.id,
       lead_id: leadId,
       scheduled_at: data.scheduledAt.toISOString(),
       status: "scheduled",
-    });
+    })
+    .select()
+    .single();
 
-  if (tourError) {
-    return { error: tourError.message || "Failed to book tour" };
+  if (tourError || !tour) {
+    return { error: tourError?.message || "Failed to book tour" };
   }
+
+  await upsertTourTask({
+    supabase,
+    franchiseId: franchise.id,
+    leadId,
+    tourId: tour.id,
+    scheduledAt: data.scheduledAt.toISOString(),
+  });
 
   // 4. Update Lead Status
   const { error: updateError } = await supabase
@@ -154,23 +300,6 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
 
   if (updateError) {
       return { error: updateError.message || "Tour booked but failed to update lead status." };
-  }
-
-  // 5. Create Task
-  const { error: taskError } = await supabase
-    .from("tasks")
-    .insert({
-      franchise_id: franchise.id,
-      lead_id: leadId,
-      title: "Tour Scheduled",
-      description: `Tour scheduled for ${scheduledDate.toLocaleDateString()} at ${scheduledDate.toLocaleTimeString()}`,
-      due_date: scheduledDate.toISOString(),
-      type: "tour",
-      status: "pending"
-    });
-    
-  if (taskError) {
-      console.error("Failed to create task for tour:", taskError);
   }
 
   await runAutomations({
@@ -200,6 +329,16 @@ export async function updateTour(
 ) {
   const supabase = createClient();
 
+  const { data: existingTour, error: fetchError } = await supabase
+    .from("tours")
+    .select("lead_id, franchise_id, status, scheduled_at")
+    .eq("id", tourId)
+    .single();
+
+  if (fetchError || !existingTour) {
+    return { error: fetchError?.message || "Tour not found" };
+  }
+
   const updates: Record<string, any> = {};
   if (data.scheduledAt) {
     updates.scheduled_at = data.scheduledAt;
@@ -221,6 +360,28 @@ export async function updateTour(
     return { error: error.message };
   }
 
+  const scheduledAtIso = data.scheduledAt ?? existingTour.scheduled_at;
+  if (scheduledAtIso) {
+    await upsertTourTask({
+      supabase,
+      franchiseId: existingTour.franchise_id,
+      leadId: existingTour.lead_id,
+      tourId,
+      scheduledAt: scheduledAtIso,
+    });
+  }
+
+  if (data.status && data.status !== existingTour.status && scheduledAtIso) {
+    await handleTourStatusChange({
+      supabase,
+      tourId,
+      leadId: existingTour.lead_id,
+      franchiseId: existingTour.franchise_id,
+      newTourStatus: data.status,
+      scheduledAt: scheduledAtIso,
+    });
+  }
+
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };
@@ -229,11 +390,26 @@ export async function updateTour(
 export async function deleteTour(tourId: string, franchiseSlug: string) {
   const supabase = createClient();
 
+  const { data: existingTour } = await supabase
+    .from("tours")
+    .select("lead_id")
+    .eq("id", tourId)
+    .single();
+
   const { error } = await supabase.from("tours").delete().eq("id", tourId);
 
   if (error) {
     return { error: error.message };
   }
+
+  if (existingTour?.lead_id) {
+    await supabase
+      .from("leads")
+      .update({ status: "contacted" })
+      .eq("id", existingTour.lead_id);
+  }
+
+  await supabase.from("tasks").delete().eq("tour_id", tourId);
 
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
