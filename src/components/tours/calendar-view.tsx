@@ -107,27 +107,35 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                  return (
                   <div
                     key={`slot-${day.toISOString()}-${hour}`}
-                    className="p-1 border-b border-r h-20 relative hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="p-1 border-b border-r min-h-[5rem] relative hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() => slotTours.length === 0 && onSlotSelect?.(slotDate)}
                   >
+                    <div className="flex flex-col gap-1">
                     {slotTours.map((tour) => {
                       const guardian = tour.leads?.guardians?.[0];
                       const parentName = guardian
                         ? `${guardian.first_name ?? ""} ${guardian.last_name ?? ""}`.trim()
                         : "Unknown Parent";
 
-                      const leadPaths = (guardian?.students || [])
-                        .flatMap((student) => student.program_interest || [])
-                        .map((path) => path?.toUpperCase())
-                        .filter(Boolean);
+                      const leadPaths =
+                        guardian?.students?.flatMap(
+                          (student) => student.program_interest || []
+                        ) ?? [];
 
-                      const pathLabel =
-                        leadPaths.length > 0 ? leadPaths.join(", ") : "No Path";
+                      const hasJuniorPath = leadPaths.includes("jr");
+                      const pathLabel = hasJuniorPath ? "JRs" : "Gamebuilding Session";
+
+                      const cardClasses = cn(
+                        "border rounded p-2 text-[10px] truncate",
+                        hasJuniorPath
+                          ? "bg-purple-100 text-purple-700 border-purple-400"
+                          : "bg-primary/10 text-primary border-primary"
+                      );
 
                       return (
                         <div
                           key={tour.id}
-                          className="bg-primary/10 text-primary border-l-2 border-primary text-[10px] p-1 rounded mb-1 truncate"
+                          className={cardClasses}
                           title={`${parentName} • ${pathLabel}`}
                         >
                           <div className="font-semibold truncate">{parentName}</div>
@@ -135,6 +143,7 @@ export function CalendarView({ tours = [], onSlotSelect }: CalendarViewProps) {
                         </div>
                       );
                     })}
+                    </div>
                     {slotTours.length === 0 && onSlotSelect && (
                       <span className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground">
                         {/* Tap to schedule removed */}
