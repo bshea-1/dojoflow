@@ -23,7 +23,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .single();
 
   if (franchiseError || !franchise) {
-    return { error: "Franchise not found" };
+    return { error: franchiseError?.message || "Franchise not found" };
   }
 
   // 2. Validate Operating Hours
@@ -82,7 +82,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       .single();
 
     if (leadError || !insertedLead) {
-      return { error: "Failed to create lead record" };
+      return { error: leadError?.message || "Failed to create lead record" };
     }
 
     const { data: insertedGuardian, error: guardianError } = await supabase
@@ -98,7 +98,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       .single();
 
     if (guardianError || !insertedGuardian) {
-      return { error: "Failed to create guardian record" };
+      return { error: guardianError?.message || "Failed to create guardian record" };
     }
     
     // Create student for new lead
@@ -112,7 +112,6 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       });
 
      if (studentError) {
-       // Non-critical, but good to log
        console.error("Failed to create student for tour booking:", studentError);
      }
 
@@ -141,7 +140,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     });
 
   if (tourError) {
-    return { error: "Failed to book tour" };
+    return { error: tourError.message || "Failed to book tour" };
   }
 
   // 4. Update Lead Status
@@ -151,7 +150,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .eq("id", leadId);
 
   if (updateError) {
-      return { error: "Tour booked but failed to update lead status." };
+      return { error: updateError.message || "Tour booked but failed to update lead status." };
   }
 
   // 5. Create Task
