@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -80,6 +81,7 @@ export function BookTourDialog({
   const isControlled = typeof open === "boolean" && !!onOpenChange;
   const dialogOpen = isControlled ? Boolean(open) : internalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
@@ -119,6 +121,7 @@ export function BookTourDialog({
       toast.success("Tour booked successfully");
       handleOpenChange(false);
       form.reset(buildDefaultValues());
+      router.refresh();
     } catch (error) {
       console.error("Booking error:", error);
       toast.error("An unexpected error occurred");

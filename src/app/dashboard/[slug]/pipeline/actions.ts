@@ -4,11 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 import { NewLeadSchema } from "@/lib/schemas/new-lead";
 import { revalidatePath } from "next/cache";
+import { runAutomations } from "@/lib/automations/run-automations";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
 
 export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, franchiseSlug: string) {
   const supabase = createClient();
+
+  const { data: leadRecord } = await supabase
+    .from("leads")
+    .select("franchise_id")
+    .eq("id", leadId)
+    .single();
 
   const { error } = await supabase
     .from("leads")
@@ -17,6 +24,24 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (leadRecord?.franchise_id) {
+    await runAutomations({
+      trigger: "status_changed",
+      franchiseId: leadRecord.franchise_id,
+      leadId,
+      context: { newStatus },
+    });
+
+    if (newStatus === "tour_booked" || newStatus === "tour_completed") {
+      await runAutomations({
+        trigger: newStatus,
+        franchiseId: leadRecord.franchise_id,
+        leadId,
+        context: { newStatus },
+      });
+    }
   }
 
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
@@ -86,6 +111,12 @@ export async function createLead(data: NewLeadSchema, franchiseSlug: string) {
   if (studentError) {
     return { error: "Failed to create student record" };
   }
+
+  await runAutomations({
+    trigger: "lead_created",
+    franchiseId: franchise.id,
+    leadId: lead.id,
+  });
 
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
   return { success: true };

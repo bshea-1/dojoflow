@@ -14,7 +14,8 @@ import {
   LogOut,
   UserCheck,
   CheckSquare,
-  MapPin
+  MapPin,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/actions/auth";
@@ -44,6 +45,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
     { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare },
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
     { href: `/dashboard/${franchiseSlug}/members`, label: "Members", icon: UserCheck },
+    { href: `/dashboard/${franchiseSlug}/automations`, label: "Automations", icon: Zap },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
 

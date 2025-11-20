@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BookTourSchema, programLeadOptions } from "@/lib/schemas/book-tour";
 import { revalidatePath } from "next/cache";
 import { getDay } from "date-fns";
+import { runAutomations } from "@/lib/automations/run-automations";
 
 // Helper to parse time string "HH:mm" to hours
 function parseTime(timeStr: string) {
@@ -116,6 +117,12 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
      }
 
     leadId = insertedLead.id;
+
+    await runAutomations({
+      trigger: "lead_created",
+      franchiseId: franchise.id,
+      leadId,
+    });
   }
 
   if (!leadId) {
@@ -162,6 +169,20 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   if (taskError) {
       console.error("Failed to create task for tour:", taskError);
   }
+
+  await runAutomations({
+    trigger: "status_changed",
+    franchiseId: franchise.id,
+    leadId,
+    context: { newStatus: "tour_booked" },
+  });
+
+  await runAutomations({
+    trigger: "tour_booked",
+    franchiseId: franchise.id,
+    leadId,
+    context: { newStatus: "tour_booked" },
+  });
 
   revalidatePath(`/dashboard/${franchiseSlug}/tours`);
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);

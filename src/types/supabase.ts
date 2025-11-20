@@ -282,10 +282,100 @@ export interface Database {
           updated_at?: string
         }
       }
+      interactions: {
+        Row: {
+          id: string
+          lead_id: string
+          type: 'call' | 'sms' | 'email'
+          content: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          type: 'call' | 'sms' | 'email'
+          content?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          type?: 'call' | 'sms' | 'email'
+          content?: string | null
+          created_at?: string
+        }
+      }
+      automations: {
+        Row: {
+          id: string
+          franchise_id: string
+          name: string
+          trigger: 'lead_created' | 'status_changed' | 'tour_booked' | 'tour_completed'
+          conditions: Json
+          actions: Json
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          franchise_id: string
+          name: string
+          trigger: 'lead_created' | 'status_changed' | 'tour_booked' | 'tour_completed'
+          conditions?: Json
+          actions?: Json
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          franchise_id?: string
+          name?: string
+          trigger?: 'lead_created' | 'status_changed' | 'tour_booked' | 'tour_completed'
+          conditions?: Json
+          actions?: Json
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      automation_logs: {
+        Row: {
+          id: string
+          franchise_id: string
+          automation_id: string | null
+          lead_id: string | null
+          status: string
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          franchise_id: string
+          automation_id?: string | null
+          lead_id?: string | null
+          status: string
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          franchise_id?: string
+          automation_id?: string | null
+          lead_id?: string | null
+          status?: string
+          error_message?: string | null
+          created_at?: string
+        }
+      }
     }
     Enums: {
       program_interest: 'jr' | 'create' | 'camp' | 'ai' | 'robotics' | 'clubs' | 'birthday_party' | 'pno' | 'academy'
       app_role: 'franchisee' | 'center_director' | 'sensei'
+      automation_trigger: 'lead_created' | 'status_changed' | 'tour_booked' | 'tour_completed'
+      automation_action_type: 'send_email' | 'send_sms' | 'create_task'
+      interaction_type: 'call' | 'sms' | 'email'
     }
   }
 }
