@@ -28,26 +28,34 @@ async function upsertTourTask(params: {
   const friendlyDate = format(new Date(scheduledAt), "MMM d, yyyy h:mm a");
   const description = `Tour scheduled for ${friendlyDate}`;
 
-  const { data: existingTask } = await supabase
+  const { data: existingTask, error: fetchError } = await supabase
     .from("tasks")
     .select("id, status")
     .eq("tour_id", tourId)
     .maybeSingle();
 
+  if (fetchError) {
+    console.error("Error fetching existing tour task:", fetchError);
+  }
+
   if (existingTask) {
-    await supabase
+    const { error: updateError } = await supabase
       .from("tasks")
       .update({
         due_date: scheduledAt,
         description,
       })
       .eq("id", existingTask.id);
+    
+    if (updateError) {
+      console.error("Error updating tour task:", updateError);
+    }
   } else {
     const scheduledDate = new Date(scheduledAt);
     const windowStart = new Date(scheduledDate.getTime() - 30 * 60 * 1000).toISOString();
     const windowEnd = new Date(scheduledDate.getTime() + 30 * 60 * 1000).toISOString();
 
-    const { data: fallbackTask } = await supabase
+    const { data: fallbackTask, error: fallbackError } = await supabase
       .from("tasks")
       .select("id")
       .eq("lead_id", leadId)
@@ -60,8 +68,12 @@ async function upsertTourTask(params: {
       .limit(1)
       .maybeSingle();
 
+    if (fallbackError) {
+      console.error("Error fetching fallback task:", fallbackError);
+    }
+
     if (fallbackTask) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("tasks")
         .update({
           due_date: scheduledAt,
@@ -70,8 +82,12 @@ async function upsertTourTask(params: {
           type: "tour",
         })
         .eq("id", fallbackTask.id);
+      
+      if (updateError) {
+        console.error("Error updating fallback task:", updateError);
+      }
     } else {
-      await supabase.from("tasks").insert({
+      const { error: insertError } = await supabase.from("tasks").insert({
         franchise_id: franchiseId,
         lead_id: leadId,
         tour_id: tourId,
@@ -81,6 +97,11 @@ async function upsertTourTask(params: {
         type: "tour",
         status: "pending",
       });
+      
+      if (insertError) {
+        console.error("Error inserting tour task:", insertError);
+        throw insertError;
+      }
     }
   }
 }
@@ -325,13 +346,18 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     return { error: tourError?.message || "Failed to book tour" };
   }
 
-  await upsertTourTask({
-    supabase,
-    franchiseId: franchise.id,
-    leadId,
-    tourId: tour.id,
-    scheduledAt: data.scheduledAt.toISOString(),
-  });
+  try {
+    await upsertTourTask({
+      supabase,
+      franchiseId: franchise.id,
+      leadId,
+      tourId: tour.id,
+      scheduledAt: data.scheduledAt.toISOString(),
+    });
+  } catch (taskError: any) {
+    console.error("Error creating tour task:", taskError);
+    // Continue even if task creation fails - tour is still booked
+  }
 
   // 4. Update Lead Status
   const { error: updateError } = await supabase

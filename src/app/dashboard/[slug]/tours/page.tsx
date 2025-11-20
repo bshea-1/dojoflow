@@ -31,7 +31,7 @@ export default async function ToursPage({ params }: { params: { slug: string } }
       )
     `)
     .eq("franchise_id", franchise.id)
-    .in("status", ["scheduled", null]); // Only show scheduled tours
+    .or("status.eq.scheduled,status.is.null"); // Only show scheduled tours
 
   // 3. Fetch Leads for Dropdown (only those not yet enrolled/lost ideally, or just all active)
   const { data: leads } = await supabase
