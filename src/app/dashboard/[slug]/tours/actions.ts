@@ -43,16 +43,45 @@ async function upsertTourTask(params: {
       })
       .eq("id", existingTask.id);
   } else {
-    await supabase.from("tasks").insert({
-      franchise_id: franchiseId,
-      lead_id: leadId,
-      tour_id: tourId,
-      title: "Tour Scheduled",
-      description,
-      due_date: scheduledAt,
-      type: "tour",
-      status: "pending",
-    });
+    const scheduledDate = new Date(scheduledAt);
+    const windowStart = new Date(scheduledDate.getTime() - 30 * 60 * 1000).toISOString();
+    const windowEnd = new Date(scheduledDate.getTime() + 30 * 60 * 1000).toISOString();
+
+    const { data: fallbackTask } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("lead_id", leadId)
+      .eq("title", "Tour Scheduled")
+      .is("tour_id", null)
+      .eq("status", "pending")
+      .gte("due_date", windowStart)
+      .lte("due_date", windowEnd)
+      .order("due_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (fallbackTask) {
+      await supabase
+        .from("tasks")
+        .update({
+          due_date: scheduledAt,
+          description,
+          tour_id: tourId,
+          type: "tour",
+        })
+        .eq("id", fallbackTask.id);
+    } else {
+      await supabase.from("tasks").insert({
+        franchise_id: franchiseId,
+        lead_id: leadId,
+        tour_id: tourId,
+        title: "Tour Scheduled",
+        description,
+        due_date: scheduledAt,
+        type: "tour",
+        status: "pending",
+      });
+    }
   }
 }
 
@@ -130,6 +159,8 @@ async function handleTourStatusChange(params: {
     })
     .eq("tour_id", tourId);
 
+  const followUpDate = addDays(new Date(scheduledAt), 1);
+
   if (newTourStatus === "completed") {
     await createFollowUpTask({
       supabase,
@@ -137,7 +168,7 @@ async function handleTourStatusChange(params: {
       leadId,
       title: "Post-Tour Follow-up",
       description: "Call family to discuss enrollment options.",
-      dueDate: addDays(new Date(scheduledAt), 1),
+      dueDate: followUpDate,
     });
   } else if (newTourStatus === "no-show") {
     await createFollowUpTask({
@@ -146,7 +177,7 @@ async function handleTourStatusChange(params: {
       leadId,
       title: "Tour No-Show Follow-up",
       description: "Reach out to reschedule their tour.",
-      dueDate: new Date(),
+      dueDate: followUpDate,
     });
   }
 }
