@@ -182,6 +182,12 @@ async function handleTourStatusChange(params: {
   }
 }
 
+function revalidateTourSurfaces(franchiseSlug: string) {
+  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
+  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidatePath(`/dashboard/${franchiseSlug}/actions`);
+}
+
 export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   const supabase = createClient();
 
@@ -347,8 +353,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     context: { newStatus: "tour_booked" },
   });
 
-  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
-  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidateTourSurfaces(franchiseSlug);
   
   return { success: true };
 }
@@ -413,8 +418,7 @@ export async function updateTour(
     });
   }
 
-  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
-  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidateTourSurfaces(franchiseSlug);
   return { success: true };
 }
 
@@ -442,7 +446,6 @@ export async function deleteTour(tourId: string, franchiseSlug: string) {
 
   await supabase.from("tasks").delete().eq("tour_id", tourId);
 
-  revalidatePath(`/dashboard/${franchiseSlug}/tours`);
-  revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidateTourSurfaces(franchiseSlug);
   return { success: true };
 }
