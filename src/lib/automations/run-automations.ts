@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
+import { revalidatePath } from "next/cache";
 
 type AutomationTrigger = Database["public"]["Enums"]["automation_trigger"];
 type AutomationActionType = Database["public"]["Enums"]["automation_action_type"];
@@ -24,6 +25,7 @@ interface ExecuteAutomationOptions {
   trigger: AutomationTrigger;
   franchiseId: string;
   leadId: string;
+  franchiseSlug?: string; // Optional slug for cache revalidation
   context?: {
     newStatus?: string;
   };
@@ -33,6 +35,7 @@ export async function runAutomations({
   trigger,
   franchiseId,
   leadId,
+  franchiseSlug,
   context = {},
 }: ExecuteAutomationOptions) {
   const supabase = createClient();
@@ -105,6 +108,10 @@ export async function runAutomations({
             status: "pending",
             tour_id: null,
           });
+          // Revalidate actions page if slug is provided
+          if (franchiseSlug) {
+            revalidatePath(`/dashboard/${franchiseSlug}/actions`);
+          }
         }
         await supabase.from("automation_logs").insert({
           franchise_id: franchiseId,

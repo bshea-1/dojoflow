@@ -33,6 +33,7 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
       trigger: "status_changed",
       franchiseId: leadRecord.franchise_id,
       leadId,
+      franchiseSlug,
       context: automationContext,
     });
 
@@ -42,6 +43,7 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
         trigger: specificTrigger,
         franchiseId: leadRecord.franchise_id,
         leadId,
+        franchiseSlug,
         context: automationContext,
       });
     }
@@ -119,6 +121,7 @@ export async function createLead(data: NewLeadSchema, franchiseSlug: string) {
     trigger: "lead_created",
     franchiseId: franchise.id,
     leadId: lead.id,
+    franchiseSlug,
   });
 
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);

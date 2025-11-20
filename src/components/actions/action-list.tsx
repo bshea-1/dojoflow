@@ -64,6 +64,9 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
     queryKey: ["tasks", franchiseSlug],
     queryFn: () => getTasks(franchiseSlug),
     initialData: initialTasks,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
 
   const createTaskMutation = useMutation({

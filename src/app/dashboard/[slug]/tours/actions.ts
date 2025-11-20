@@ -110,11 +110,12 @@ async function createFollowUpTask(params: {
   supabase: ReturnType<typeof createClient>;
   franchiseId: string;
   leadId: string;
+  franchiseSlug: string;
   title: string;
   description: string;
   dueDate: Date;
 }) {
-  const { supabase, franchiseId, leadId, title, description, dueDate } = params;
+  const { supabase, franchiseId, leadId, franchiseSlug, title, description, dueDate } = params;
   await supabase.from("tasks").insert({
     franchise_id: franchiseId,
     lead_id: leadId,
@@ -124,6 +125,7 @@ async function createFollowUpTask(params: {
     type: "call",
     status: "pending",
   });
+  revalidatePath(`/dashboard/${franchiseSlug}/actions`);
 }
 
 async function handleTourStatusChange(params: {
@@ -131,10 +133,11 @@ async function handleTourStatusChange(params: {
   tourId: string;
   leadId: string;
   franchiseId: string;
+  franchiseSlug: string;
   newTourStatus: TourStatus;
   scheduledAt: string;
 }) {
-  const { supabase, tourId, leadId, franchiseId, newTourStatus, scheduledAt } =
+  const { supabase, tourId, leadId, franchiseId, franchiseSlug, newTourStatus, scheduledAt } =
     params;
 
   if (!leadId) return;
@@ -156,6 +159,7 @@ async function handleTourStatusChange(params: {
       trigger: "status_changed",
       franchiseId,
       leadId,
+      franchiseSlug,
       context: { newStatus: leadStatusUpdate },
     });
 
@@ -164,6 +168,7 @@ async function handleTourStatusChange(params: {
         trigger: "tour_completed",
         franchiseId,
         leadId,
+        franchiseSlug,
         context: { newStatus: leadStatusUpdate },
       });
     }
@@ -191,6 +196,7 @@ async function handleTourStatusChange(params: {
       supabase,
       franchiseId,
       leadId,
+      franchiseSlug,
       title: "Post-Tour Follow-up",
       description: "Call family to discuss enrollment options.",
       dueDate: nextDay,
@@ -200,6 +206,7 @@ async function handleTourStatusChange(params: {
       supabase,
       franchiseId,
       leadId,
+      franchiseSlug,
       title: "Tour No-Show Follow-up",
       description: "Reach out to reschedule their tour.",
       dueDate: nextDay,
@@ -323,6 +330,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       trigger: "lead_created",
       franchiseId: franchise.id,
       leadId: newLeadId,
+      franchiseSlug,
     });
   }
 
@@ -373,6 +381,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     trigger: "status_changed",
     franchiseId: franchise.id,
     leadId,
+    franchiseSlug,
     context: { newStatus: "tour_booked" },
   });
 
@@ -380,6 +389,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     trigger: "tour_booked",
     franchiseId: franchise.id,
     leadId,
+    franchiseSlug,
     context: { newStatus: "tour_booked" },
   });
 
@@ -447,6 +457,7 @@ export async function updateTour(
       tourId,
       leadId: existingTour.lead_id,
       franchiseId: existingTour.franchise_id,
+      franchiseSlug,
       newTourStatus: data.status,
       scheduledAt: scheduledAtIso,
     });
