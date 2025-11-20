@@ -427,7 +427,7 @@ export async function deleteTour(tourId: string, franchiseSlug: string) {
 
   const { data: existingTour } = await supabase
     .from("tours")
-    .select("lead_id")
+    .select("lead_id, scheduled_at")
     .eq("id", tourId)
     .single();
 
@@ -445,6 +445,26 @@ export async function deleteTour(tourId: string, franchiseSlug: string) {
   }
 
   await supabase.from("tasks").delete().eq("tour_id", tourId);
+
+  if (existingTour?.lead_id && existingTour.scheduled_at) {
+    const scheduledDate = new Date(existingTour.scheduled_at);
+    const windowStart = new Date(
+      scheduledDate.getTime() - 30 * 60 * 1000
+    ).toISOString();
+    const windowEnd = new Date(
+      scheduledDate.getTime() + 30 * 60 * 1000
+    ).toISOString();
+
+    await supabase
+      .from("tasks")
+      .delete()
+      .eq("lead_id", existingTour.lead_id)
+      .eq("title", "Tour Scheduled")
+      .is("tour_id", null)
+      .eq("status", "pending")
+      .gte("due_date", windowStart)
+      .lte("due_date", windowEnd);
+  }
 
   revalidateTourSurfaces(franchiseSlug);
   return { success: true };
