@@ -42,6 +42,16 @@ CREATE TABLE IF NOT EXISTS automation_logs (
 
 ALTER TABLE automation_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Tenant access for automation_logs" ON automation_logs
-    USING (franchise_id = get_my_franchise_id());
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename = 'automation_logs'
+          AND policyname = 'Tenant access for automation_logs'
+    ) THEN
+        EXECUTE 'CREATE POLICY "Tenant access for automation_logs" ON automation_logs USING (franchise_id = get_my_franchise_id())';
+    END IF;
+END $$;
 

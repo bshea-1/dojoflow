@@ -32,3 +32,6 @@ ts-debug.log*
 # Vercel
 .vercel
 
+# Supabase CLI temp files
+supabase/.temp/
+

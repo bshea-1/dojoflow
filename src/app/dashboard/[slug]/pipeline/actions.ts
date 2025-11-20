@@ -27,11 +27,13 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
   }
 
   if (leadRecord?.franchise_id) {
+    const automationContext = newStatus ? { newStatus } : undefined;
+
     await runAutomations({
       trigger: "status_changed",
       franchiseId: leadRecord.franchise_id,
       leadId,
-      context: { newStatus },
+      context: automationContext,
     });
 
     if (newStatus === "tour_booked" || newStatus === "tour_completed") {
@@ -39,7 +41,7 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
         trigger: newStatus,
         franchiseId: leadRecord.franchise_id,
         leadId,
-        context: { newStatus },
+        context: automationContext,
       });
     }
   }

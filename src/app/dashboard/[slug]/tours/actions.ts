@@ -116,12 +116,13 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
        console.error("Failed to create student for tour booking:", studentError);
      }
 
-    leadId = insertedLead.id;
+    const newLeadId = insertedLead.id;
+    leadId = newLeadId;
 
     await runAutomations({
       trigger: "lead_created",
       franchiseId: franchise.id,
-      leadId,
+      leadId: newLeadId,
     });
   }
 
