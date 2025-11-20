@@ -86,6 +86,7 @@ export function BookTourDialog({
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
     defaultValues: buildDefaultValues(),
+    shouldUnregister: true,
   });
 
   const { fields, append, remove } = useFieldArray({
