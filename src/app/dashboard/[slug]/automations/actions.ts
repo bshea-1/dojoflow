@@ -32,7 +32,10 @@ export async function getAutomations(franchiseSlug: string) {
   return data as Automation[];
 }
 
-export async function createAutomation(automation: Omit<NewAutomation, "franchise_id">, franchiseSlug: string) {
+export async function createAutomation(
+  automation: Omit<NewAutomation, "franchise_id">,
+  franchiseSlug: string
+) {
   const supabase = createClient();
 
   const { data: franchise } = await supabase
@@ -49,6 +52,38 @@ export async function createAutomation(automation: Omit<NewAutomation, "franchis
       ...automation,
       franchise_id: franchise.id,
     });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/${franchiseSlug}/automations`);
+  return { success: true };
+}
+
+export async function updateAutomation(
+  id: string,
+  automation: Partial<Omit<NewAutomation, "franchise_id">>,
+  franchiseSlug: string
+) {
+  const supabase = createClient();
+
+  const { data: franchise } = await supabase
+    .from("franchises")
+    .select("id")
+    .eq("slug", franchiseSlug)
+    .single();
+
+  if (!franchise) return { error: "Franchise not found" };
+
+  const { error } = await supabase
+    .from("automations")
+    .update({
+      ...automation,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("franchise_id", franchise.id);
 
   if (error) {
     return { error: error.message };

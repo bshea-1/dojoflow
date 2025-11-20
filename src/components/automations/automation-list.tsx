@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,13 +11,64 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Trash2, Zap } from "lucide-react";
+import { Pencil, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { toggleAutomation, deleteAutomation, Automation } from "@/app/dashboard/[slug]/automations/actions";
+import {
+  toggleAutomation,
+  deleteAutomation,
+  Automation,
+} from "@/app/dashboard/[slug]/automations/actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AutomationBuilder } from "./automation-builder";
 
 interface AutomationListProps {
   automations: Automation[];
   franchiseSlug: string;
+}
+
+function AutomationEditDialog({
+  automation,
+  franchiseSlug,
+}: {
+  automation: Automation;
+  franchiseSlug: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Pencil className="h-4 w-4 mr-1" />
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Automation</DialogTitle>
+          <DialogDescription>
+            Update the trigger, conditions, or actions for this automation.
+          </DialogDescription>
+        </DialogHeader>
+        <AutomationBuilder
+          franchiseSlug={franchiseSlug}
+          automation={automation}
+          onSuccess={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export function AutomationList({ automations, franchiseSlug }: AutomationListProps) {
@@ -54,65 +106,112 @@ export function AutomationList({ automations, franchiseSlug }: AutomationListPro
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {automations.map((automation) => (
-        <Card key={automation.id}>
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <CardTitle className="text-base">{automation.name}</CardTitle>
-                <CardDescription className="text-xs capitalize">
-                  Trigger: {automation.trigger.replace("_", " ")}
-                </CardDescription>
+      {automations.map((automation) => {
+        const normalizedConditions =
+          (automation.conditions as Record<string, any>) || {};
+        const conditionEntries = Object.entries(normalizedConditions).filter(
+          ([, value]) => {
+            if (Array.isArray(value)) {
+              return value.length > 0;
+            }
+            return value !== null && value !== "" && value !== undefined;
+          }
+        );
+        const normalizedActions = Array.isArray(automation.actions)
+          ? (automation.actions as any[])
+          : [];
+
+        return (
+          <Card key={automation.id}>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <CardTitle className="text-base">{automation.name}</CardTitle>
+                  <CardDescription className="text-xs capitalize">
+                    Trigger: {automation.trigger.replace("_", " ")}
+                  </CardDescription>
+                </div>
+                <Switch
+                  checked={automation.active || false}
+                  onCheckedChange={() =>
+                    handleToggle(automation.id, automation.active || false)
+                  }
+                />
               </div>
-              <Switch
-                checked={automation.active || false}
-                onCheckedChange={() => handleToggle(automation.id, automation.active || false)}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                <div className="font-medium text-foreground mb-1 text-xs uppercase tracking-wider">Conditions</div>
-                {Object.keys(automation.conditions as any).length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {Object.entries(automation.conditions as any).map(([key, value]) => (
-                      <Badge key={key} variant="outline" className="text-xs font-normal">
-                        {key.replace("_", " ")}: {Array.isArray(value) ? value.join(", ") : String(value)}
-                      </Badge>
-                    ))}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <div className="font-medium text-foreground mb-1 text-xs uppercase tracking-wider">
+                    Conditions
                   </div>
-                ) : (
-                  <span className="text-xs italic">No extra conditions</span>
-                )}
-              </div>
+                  {conditionEntries.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {conditionEntries.map(([key, value]) => (
+                        <Badge
+                          key={key}
+                          variant="outline"
+                          className="text-xs font-normal"
+                        >
+                          {key.replace("_", " ")}:{" "}
+                          {Array.isArray(value)
+                            ? value.join(", ")
+                            : String(value)}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs italic">No extra conditions</span>
+                  )}
+                </div>
 
-              <div className="text-sm text-muted-foreground">
-                <div className="font-medium text-foreground mb-1 text-xs uppercase tracking-wider">Actions</div>
-                <ul className="list-disc list-inside space-y-1">
-                  {(automation.actions as any[]).map((action, idx) => (
-                    <li key={idx} className="text-xs">
-                      <span className="font-medium capitalize">{action.type.replace("_", " ")}</span>
-                      {action.template && <span className="opacity-75"> ({action.template})</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <div className="text-sm text-muted-foreground">
+                  <div className="font-medium text-foreground mb-1 text-xs uppercase tracking-wider">
+                    Actions
+                  </div>
+                  {normalizedActions.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {normalizedActions.map((action, idx) => {
+                        const detail =
+                          action.type === "create_task"
+                            ? action.title || "Automation task"
+                            : action.message ||
+                              action.template ||
+                              "No content specified";
+                        return (
+                          <li key={idx} className="text-xs">
+                            <span className="font-medium capitalize">
+                              {action.type.replace("_", " ")}
+                            </span>
+                            <span className="opacity-75"> — {detail}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <span className="text-xs italic">No actions configured</span>
+                  )}
+                </div>
 
-              <div className="flex justify-end pt-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(automation.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" /> Delete
-                </Button>
+                <div className="flex justify-end gap-2 pt-2">
+                  <AutomationEditDialog
+                    automation={automation}
+                    franchiseSlug={franchiseSlug}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDelete(automation.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

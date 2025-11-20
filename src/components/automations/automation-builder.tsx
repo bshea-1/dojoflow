@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,44 +27,86 @@ import {
 } from "@/components/ui/form";
 import { MultiSelectDropdown } from "@/components/ui/multi-select-dropdown";
 import { programLeadOptions } from "@/lib/schemas/book-tour";
-import { createAutomation } from "@/app/dashboard/[slug]/automations/actions";
+import {
+  Automation,
+  createAutomation,
+  updateAutomation,
+} from "@/app/dashboard/[slug]/automations/actions";
 
 // Schema
-const automationSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  trigger: z.enum(["lead_created", "status_changed", "tour_booked", "tour_completed"]),
-  conditions: z.object({
-    lead_path: z.array(z.string()).optional(),
-    status: z.string().optional(), // For 'status_changed', maybe 'to_status'
-  }),
-  actions: z.array(z.object({
-    type: z.enum(["send_email", "send_sms", "create_task"]),
-    template: z.string().optional(), // Mock template ID or name
-    message: z.string().optional(), // Mock message body
-    title: z.string().optional(), // For tasks
-  })).min(1, "Add at least one action"),
-});
+const automationSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    trigger: z.enum([
+      "lead_created",
+      "status_changed",
+      "tour_booked",
+      "tour_completed",
+    ]),
+    conditions: z.object({
+      lead_path: z.array(z.string()).optional(),
+      status: z.string().optional(),
+    }),
+    actions: z
+      .array(
+        z.object({
+          type: z.enum(["send_email", "send_sms", "create_task"]),
+          template: z.string().optional(),
+          message: z.string().optional(),
+          title: z.string().optional(),
+        })
+      )
+      .min(1, "Add at least one action"),
+  })
+  .superRefine((data, ctx) => {
+    data.actions.forEach((action, index) => {
+      if (action.type === "create_task" && !action.title) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Task title is required",
+          path: ["actions", index, "title"],
+        });
+      }
+
+      if (action.type !== "create_task" && !action.message) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Message is required",
+          path: ["actions", index, "message"],
+        });
+      }
+    });
+  });
 
 type AutomationFormValues = z.infer<typeof automationSchema>;
 
 interface AutomationBuilderProps {
   franchiseSlug: string;
+  automation?: Automation;
   onSuccess?: () => void;
 }
 
-export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilderProps) {
+const EMPTY_FORM_VALUES: AutomationFormValues = {
+  name: "",
+  trigger: "lead_created",
+  conditions: {
+    lead_path: [],
+    status: "",
+  },
+  actions: [{ type: "send_email", message: "", template: "", title: "" }],
+};
+
+export function AutomationBuilder({
+  franchiseSlug,
+  automation,
+  onSuccess,
+}: AutomationBuilderProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = Boolean(automation);
+
   const form = useForm<AutomationFormValues>({
     resolver: zodResolver(automationSchema),
-    defaultValues: {
-      name: "",
-      trigger: "lead_created",
-      conditions: {
-        lead_path: [],
-      },
-      actions: [
-        { type: "send_email", template: "welcome_email" } // Default action
-      ],
-    },
+    defaultValues: EMPTY_FORM_VALUES,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -72,26 +114,80 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
     name: "actions",
   });
 
+  useEffect(() => {
+    if (automation) {
+      const conditions = (automation.conditions as Record<string, any>) || {};
+      const actions = Array.isArray(automation.actions)
+        ? automation.actions
+        : [];
+
+      form.reset({
+        name: automation.name,
+        trigger: automation.trigger,
+        conditions: {
+          lead_path: conditions.lead_path ?? [],
+          status: conditions.status ?? "",
+        },
+        actions:
+          actions.length > 0
+            ? actions.map((action: any) => ({
+                type: action.type ?? "send_email",
+                template: action.template ?? "",
+                message: action.message ?? "",
+                title: action.title ?? "",
+              }))
+            : EMPTY_FORM_VALUES.actions,
+      });
+    } else {
+      form.reset(EMPTY_FORM_VALUES);
+    }
+  }, [automation, form]);
+
   async function onSubmit(data: AutomationFormValues) {
+    setIsSubmitting(true);
     try {
-      const result = await createAutomation({
+      const payload = {
         name: data.name,
         trigger: data.trigger,
-        conditions: data.conditions,
-        actions: data.actions,
+        conditions: {
+          lead_path: data.conditions.lead_path ?? [],
+          status:
+            data.trigger === "status_changed" && data.conditions.status
+              ? data.conditions.status
+              : null,
+        },
+        actions: data.actions.map((action) => ({
+          type: action.type,
+          template: action.template ?? "",
+          message: action.message ?? "",
+          title: action.title ?? "",
+        })),
         active: true,
-      }, franchiseSlug);
+      };
+
+      const result =
+        isEditMode && automation
+          ? await updateAutomation(automation.id, payload, franchiseSlug)
+          : await createAutomation(payload, franchiseSlug);
 
       if (result.error) {
         toast.error(result.error);
         return;
       }
 
-      toast.success("Automation created");
-      form.reset();
+      toast.success(isEditMode ? "Automation updated" : "Automation created");
+      if (!isEditMode) {
+        form.reset(EMPTY_FORM_VALUES);
+      }
       onSuccess?.();
     } catch (error) {
-      toast.error("Failed to create automation");
+      toast.error(
+        isEditMode
+          ? "Failed to update automation"
+          : "Failed to create automation"
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -119,7 +215,7 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Trigger</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select trigger" />
@@ -148,13 +244,14 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
              render={({ field }) => (
                <FormItem>
                  <FormLabel>New Status Is</FormLabel>
-                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                 <Select onValueChange={field.onChange} value={field.value}>
                    <FormControl>
                      <SelectTrigger>
                        <SelectValue placeholder="Any Status" />
                      </SelectTrigger>
                    </FormControl>
                    <SelectContent>
+                    <SelectItem value="">Any Status</SelectItem>
                      <SelectItem value="new">New Lead</SelectItem>
                      <SelectItem value="contacted">Contacted</SelectItem>
                      <SelectItem value="tour_booked">Tour Booked</SelectItem>
@@ -199,7 +296,9 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ type: "send_email", template: "" })}
+              onClick={() =>
+                append({ type: "send_email", template: "", message: "", title: "" })
+              }
             >
               <Plus className="mr-2 h-3 w-3" /> Add Action
             </Button>
@@ -213,7 +312,7 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
                 render={({ field }) => (
                   <FormItem className="w-[140px]">
                     <FormLabel className="text-xs">Action Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-8">
                           <SelectValue />
@@ -275,7 +374,9 @@ export function AutomationBuilder({ franchiseSlug, onSuccess }: AutomationBuilde
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit">Create Automation</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isEditMode ? "Save Changes" : "Create Automation"}
+          </Button>
         </div>
       </form>
     </Form>
