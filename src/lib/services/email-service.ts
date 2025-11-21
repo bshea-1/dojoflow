@@ -1,6 +1,6 @@
 "use server";
 
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { Resend } from "resend";
 
 interface EmailRecipient {
     email: string;
@@ -15,73 +15,54 @@ interface SendEmailParams {
 }
 
 /**
- * Initialize AWS SES client
+ * Initialize Resend client
  */
-function getSESClient() {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    const region = process.env.AWS_REGION || "us-east-1";
+function getResendClient() {
+    const apiKey = process.env.RESEND_API_KEY;
 
-    if (!accessKeyId || !secretAccessKey) {
+    if (!apiKey) {
         throw new Error(
-            "Missing AWS credentials. Please configure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your environment variables."
+            "Missing Resend API key. Please configure RESEND_API_KEY in your environment variables."
         );
     }
 
-    return new SESClient({
-        region,
-        credentials: {
-            accessKeyId,
-            secretAccessKey,
-        },
-    });
+    return new Resend(apiKey);
 }
 
 /**
- * Send email using Amazon SES
+ * Send email using Resend
  */
-export async function sendEmailViaSES({
+export async function sendEmailViaResend({
     to,
     subject,
     htmlBody,
     from,
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
-        const ses = getSESClient();
-        const fromEmail = from || process.env.AWS_FROM_EMAIL;
+        const resend = getResendClient();
+        // Use the provided from email or default to the one in env
+        // Note: For Resend free tier/testing, you must use 'onboarding@resend.dev' unless you verify a domain
+        const fromEmail = from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-        if (!fromEmail) {
-            throw new Error("AWS_FROM_EMAIL is not configured");
-        }
+        // Resend accepts an array of strings for 'to'
+        const recipients = to.map((r) => r.email);
 
-        // SES sends to a list of addresses
-        const recipientAddresses = to.map((r) => r.email);
-
-        const command = new SendEmailCommand({
-            Destination: {
-                ToAddresses: recipientAddresses,
-            },
-            Message: {
-                Body: {
-                    Html: {
-                        Charset: "UTF-8",
-                        Data: htmlBody,
-                    },
-                },
-                Subject: {
-                    Charset: "UTF-8",
-                    Data: subject,
-                },
-            },
-            Source: fromEmail,
+        const { data, error } = await resend.emails.send({
+            from: fromEmail,
+            to: recipients,
+            subject: subject,
+            html: htmlBody,
         });
 
-        const result = await ses.send(command);
+        if (error) {
+            console.error("Resend API error:", error);
+            return { success: false, error: error.message };
+        }
 
-        console.log(`Email sent successfully via SES to ${to.length} recipient(s)`, result.MessageId);
+        console.log(`Email sent successfully via Resend to ${to.length} recipient(s)`, data?.id);
         return { success: true };
     } catch (error) {
-        console.error("Failed to send email via SES:", error);
+        console.error("Failed to send email via Resend:", error);
 
         let errorMessage = "Failed to send email";
         if (error instanceof Error) {
