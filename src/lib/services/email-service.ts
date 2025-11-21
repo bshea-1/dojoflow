@@ -1,8 +1,7 @@
 "use server";
 
-import { Client } from "@microsoft/microsoft-graph-client";
-import { ClientSecretCredential } from "@azure/identity";
-import "isomorphic-fetch";
+import formData from "form-data";
+import Mailgun from "mailgun.js";
 
 interface EmailRecipient {
     email: string;
@@ -17,91 +16,57 @@ interface SendEmailParams {
 }
 
 /**
- * Initialize Microsoft Graph client with Azure AD credentials
+ * Initialize Mailgun client
  */
-function getGraphClient(): Client {
-    const clientId = process.env.AZURE_CLIENT_ID;
-    const clientSecret = process.env.AZURE_CLIENT_SECRET;
-    const tenantId = process.env.AZURE_TENANT_ID;
+function getMailgunClient() {
+    const apiKey = process.env.MAILGUN_API_KEY;
+    const domain = process.env.MAILGUN_DOMAIN;
 
-    if (!clientId || !clientSecret || !tenantId) {
+    if (!apiKey || !domain) {
         throw new Error(
-            "Missing Azure AD credentials. Please configure AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID in your environment variables."
+            "Missing Mailgun credentials. Please configure MAILGUN_API_KEY and MAILGUN_DOMAIN in your environment variables."
         );
     }
 
-    // Create credential using client credentials flow
-    const credential = new ClientSecretCredential(
-        tenantId,
-        clientId,
-        clientSecret
-    );
-
-    // Initialize Graph client
-    const client = Client.initWithMiddleware({
-        authProvider: {
-            getAccessToken: async () => {
-                const token = await credential.getToken(
-                    "https://graph.microsoft.com/.default"
-                );
-                return token?.token || "";
-            },
-        },
-    });
-
-    return client;
+    const mailgun = new Mailgun(formData);
+    return mailgun.client({ username: "api", key: apiKey });
 }
 
 /**
- * Send email using Microsoft Graph API
+ * Send email using Mailgun API
  */
-export async function sendEmailViaGraph({
+export async function sendEmailViaMailgun({
     to,
     subject,
     htmlBody,
     from,
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
-        const client = getGraphClient();
-        const fromEmail = from || process.env.OUTLOOK_EMAIL_FROM;
+        const mg = getMailgunClient();
+        const domain = process.env.MAILGUN_DOMAIN;
+        const fromEmail = from || process.env.MAILGUN_FROM_EMAIL || "noreply@" + domain;
 
-        if (!fromEmail) {
-            throw new Error(
-                "No sender email configured. Please set OUTLOOK_EMAIL_FROM in your environment variables."
-            );
+        if (!domain) {
+            throw new Error("MAILGUN_DOMAIN is not configured");
         }
 
-        // Prepare recipients
-        const recipients = to.map((recipient) => ({
-            emailAddress: {
-                address: recipient.email,
-                name: recipient.name || recipient.email,
-            },
-        }));
+        // Prepare recipients - Mailgun accepts array of email strings or "Name <email>" format
+        const recipients = to.map((recipient) =>
+            recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email
+        );
 
-        // Prepare email message
-        const message = {
+        // Send email using Mailgun
+        const result = await mg.messages.create(domain, {
+            from: fromEmail,
+            to: recipients,
             subject,
-            body: {
-                contentType: "HTML",
-                content: htmlBody,
-            },
-            toRecipients: recipients,
-        };
+            html: htmlBody,
+        });
 
-        // Send email using Microsoft Graph API
-        // Using /users/{userId}/sendMail endpoint
-        await client
-            .api(`/users/${fromEmail}/sendMail`)
-            .post({
-                message,
-                saveToSentItems: true,
-            });
-
-        console.log(`Email sent successfully to ${to.length} recipient(s)`);
+        console.log(`Email sent successfully via Mailgun to ${to.length} recipient(s)`, result);
         return { success: true };
     } catch (error) {
-        console.error("Failed to send email via Microsoft Graph:", error);
+        console.error("Failed to send email via Mailgun:", error);
 
         let errorMessage = "Failed to send email";
         if (error instanceof Error) {

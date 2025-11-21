@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { sendEmailViaGraph, isValidEmail } from "@/lib/services/email-service";
+import { sendEmailViaMailgun, isValidEmail } from "@/lib/services/email-service";
 
 export async function sendEmail(
     recipients: string[],
@@ -20,14 +20,14 @@ export async function sendEmail(
             };
         }
 
-        // Prepare recipients for Graph API
+        // Prepare recipients for Mailgun API
         const emailRecipients = validRecipients.map(email => ({
             email,
             name: email.split('@')[0], // Use email prefix as name
         }));
 
-        // Send email via Microsoft Graph
-        const result = await sendEmailViaGraph({
+        // Send email via Mailgun
+        const result = await sendEmailViaMailgun({
             to: emailRecipients,
             subject,
             htmlBody: body, // Body is already HTML from RichTextEditor
