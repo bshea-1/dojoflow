@@ -23,6 +23,8 @@ yarn-debug.log*
 ts-debug.log*
 
 # Environment variables
+.env.local
+.env
 
 
 # Vercel
