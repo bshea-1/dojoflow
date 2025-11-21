@@ -73,10 +73,10 @@ const OUTCOME_OPTIONS = [
   "Other",
 ];
 
-export function TaskDetailDialog({ 
-  task, 
-  franchiseSlug, 
-  open, 
+export function TaskDetailDialog({
+  task,
+  franchiseSlug,
+  open,
   onOpenChange,
   onSaveAndAdd,
   isReadOnly = false
@@ -88,7 +88,11 @@ export function TaskDetailDialog({
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ status }: { status: "pending" | "completed"; closeAfter?: boolean }) => {
-      await updateTaskStatus(task.id, status, franchiseSlug, outcome);
+      const result = await updateTaskStatus(task.id, status, franchiseSlug, outcome);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", franchiseSlug] });
@@ -101,6 +105,9 @@ export function TaskDetailDialog({
         onOpenChange(false);
       }
     },
+    onError: (error) => {
+      toast.error(`Failed to save task: ${error.message}`);
+    }
   });
 
   const deleteTaskMutation = useMutation({
@@ -233,7 +240,7 @@ export function TaskDetailDialog({
 
           <div className="space-y-3">
             <h4 className="text-sm font-medium">Completion Details</h4>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-medium">Outcome / Result</label>
               <Select value={outcome} onValueChange={setOutcome} disabled={isReadOnly}>
@@ -255,15 +262,15 @@ export function TaskDetailDialog({
         <DialogFooter className="gap-2 sm:gap-0">
           {!isReadOnly ? (
             <>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full sm:w-auto"
                 disabled={isTourActionPending}
                 onClick={() => updateStatusMutation.mutate({ status: "completed" })}
               >
                 Save Task
               </Button>
-              <Button 
+              <Button
                 className="w-full sm:w-auto"
                 disabled={isTourActionPending}
                 onClick={() => updateStatusMutation.mutate({ status: "completed", closeAfter: true })}
@@ -273,8 +280,8 @@ export function TaskDetailDialog({
               </Button>
             </>
           ) : (
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               className="w-full sm:w-auto"
               onClick={() => onOpenChange(false)}
             >

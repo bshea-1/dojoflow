@@ -173,9 +173,9 @@ export default async function DashboardOverview({
 
   // C. Scheduled Tours Getting Completed (Tour Show Rate)
   const completedToursCount = tours.filter(t => t.status === "completed").length;
-  const totalScheduledTours = tours.filter(t => ["scheduled", "completed", "no-show"].includes(t.status || "")).length;
-  const scheduledToCompletedPercent = totalScheduledTours > 0
-    ? Math.round((completedToursCount / totalScheduledTours) * 100)
+  const totalDecidedTours = tours.filter(t => ["completed", "no-show"].includes(t.status || "")).length;
+  const scheduledToCompletedPercent = totalDecidedTours > 0
+    ? Math.round((completedToursCount / totalDecidedTours) * 100)
     : 0;
 
   // D. Children Registered After Tour Completion (Enrolled / Tour Completed+)
