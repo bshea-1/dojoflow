@@ -31,6 +31,7 @@ export async function sendEmail(
             to: emailRecipients,
             subject,
             htmlBody: body, // Body is already HTML from RichTextEditor
+            replyTo: "codenfl@outlook.com", // Set Reply-To since we send from onboarding@resend.dev
         });
 
         if (!result.success) {

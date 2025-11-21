@@ -12,6 +12,7 @@ interface SendEmailParams {
     subject: string;
     htmlBody: string;
     from?: string;
+    replyTo?: string;
 }
 
 /**
@@ -37,6 +38,7 @@ export async function sendEmailViaResend({
     subject,
     htmlBody,
     from,
+    replyTo,
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
         const resend = getResendClient();
@@ -52,6 +54,7 @@ export async function sendEmailViaResend({
             to: recipients,
             subject: subject,
             html: htmlBody,
+            replyTo: replyTo,
         });
 
         if (error) {
