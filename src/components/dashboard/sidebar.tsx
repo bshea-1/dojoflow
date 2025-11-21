@@ -55,13 +55,16 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
   };
 
   const links = [
-    { href: `/dashboard/${franchiseSlug}`, label: "Overview", icon: LayoutDashboard },
-    { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare },
-    { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare },
-    { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
-    { href: `/dashboard/${franchiseSlug}/members`, label: "Families", icon: UserCheck },
-    { href: `/dashboard/${franchiseSlug}/automations`, label: "Automations", icon: Zap },
+    { href: `/dashboard/${franchiseSlug}`, label: "Overview", icon: LayoutDashboard, roles: ["franchisee"] },
+    { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare, roles: ["franchisee", "center_director"] },
+    { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare, roles: ["franchisee", "center_director"] },
+    { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar, roles: ["franchisee", "center_director", "sensei"] },
+    { href: `/dashboard/${franchiseSlug}/members`, label: "Families", icon: UserCheck, roles: ["franchisee", "center_director"] },
+    { href: `/dashboard/${franchiseSlug}/automations`, label: "Automations", icon: Zap, roles: ["franchisee"] },
   ];
+
+  // Filter links based on current role view
+  const filteredLinks = links.filter(link => link.roles.includes(roleView || "sensei"));
 
   // Find current franchise name
   const currentFranchiseName = assignedFranchises.find(f => f.slug === franchiseSlug)?.name || "Select Location";
@@ -101,7 +104,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
           </Button>
         </div>
         <nav className="flex-1 flex flex-col gap-2 p-4">
-          {links.map((link) => {
+          {filteredLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
             return (
