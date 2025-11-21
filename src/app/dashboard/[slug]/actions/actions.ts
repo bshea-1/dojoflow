@@ -5,7 +5,14 @@ import { TaskSchema } from "@/lib/schemas/task";
 import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
 
-type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
+  leads?: {
+    guardians: {
+      first_name: string;
+      last_name: string;
+    }[];
+  } | null;
+};
 
 export async function getTasks(franchiseSlug: string) {
   const supabase = createClient();
@@ -101,8 +108,8 @@ export async function createTask(data: TaskSchema, franchiseSlug: string) {
 }
 
 export async function updateTaskStatus(
-  taskId: string, 
-  status: "pending" | "completed", 
+  taskId: string,
+  status: "pending" | "completed",
   franchiseSlug: string,
   outcome?: string
 ) {

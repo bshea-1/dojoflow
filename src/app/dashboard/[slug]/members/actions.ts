@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export type Member = {
   id: string;
@@ -81,4 +82,37 @@ export async function getMembers(franchiseSlug: string): Promise<Member[]> {
   });
 
   return members;
+}
+
+export async function getFamilyTasks(leadId: string) {
+  const supabase = createClient();
+
+  const { data: tasks, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("due_date", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching family tasks:", error);
+    return [];
+  }
+
+  return tasks || [];
+}
+
+export async function updateLeadNotes(leadId: string, notes: string, franchiseSlug: string) {
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from("leads")
+    .update({ notes })
+    .eq("id", leadId);
+
+  if (error) {
+    console.error("Error updating lead notes:", error);
+    throw new Error("Failed to update notes");
+  }
+
+  revalidatePath(`/dashboard/${franchiseSlug}/members`);
 }

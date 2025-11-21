@@ -39,6 +39,7 @@ import { LeadEditForm } from "@/components/leads/lead-edit-form";
 import { EditLeadSchema } from "@/lib/schemas/edit-lead";
 import type { Member as MemberType } from "@/app/dashboard/[slug]/members/actions";
 import { programLeadOptions } from "@/lib/schemas/book-tour";
+import { FamilyProfileDialog } from "./family-profile-dialog";
 
 interface MembersListProps {
   initialMembers: MemberType[];
@@ -59,6 +60,7 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
   const [programFilters, setProgramFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [editingMember, setEditingMember] = useState<MemberType | null>(null);
+  const [viewingMember, setViewingMember] = useState<MemberType | null>(null);
 
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
@@ -280,6 +282,9 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setViewingMember(member)}>
+                        View Profile
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleIndividualAction(`${member.guardianFirstName} ${member.guardianLastName}`, "email")}
                       >
@@ -342,6 +347,16 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
           )}
         </DialogContent>
       </Dialog>
+
+      {viewingMember && (
+        <FamilyProfileDialog
+          member={viewingMember}
+          franchiseSlug={franchiseSlug}
+          open={!!viewingMember}
+          onOpenChange={(open) => !open && setViewingMember(null)}
+          isReadOnly={isReadOnly}
+        />
+      )}
     </div>
   );
 }
