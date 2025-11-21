@@ -18,6 +18,13 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
     .eq("id", leadId)
     .single();
 
+  // Delete any existing pending tasks for this lead to avoid stacking
+  await supabase
+    .from("tasks")
+    .delete()
+    .eq("lead_id", leadId)
+    .eq("status", "pending");
+
   const { error } = await supabase
     .from("leads")
     .update({ status: newStatus })
