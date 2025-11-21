@@ -253,26 +253,26 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
 
       <Tabs defaultValue="today" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overdue" className="relative">
+          <TabsTrigger value="overdue" className="flex items-center gap-2">
             Overdue
             {overdueTasks.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
                 {overdueTasks.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="today" className="relative">
+          <TabsTrigger value="today" className="flex items-center gap-2">
             Today
             {todayTasks.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
                 {todayTasks.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="relative">
+          <TabsTrigger value="upcoming" className="flex items-center gap-2">
             Upcoming
             {futureTasks.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
                 {futureTasks.length}
               </span>
             )}

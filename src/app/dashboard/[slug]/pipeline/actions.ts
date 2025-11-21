@@ -5,6 +5,7 @@ import { Database } from "@/types/supabase";
 import { NewLeadSchema } from "@/lib/schemas/new-lead";
 import { revalidatePath } from "next/cache";
 import { runAutomations } from "@/lib/automations/run-automations";
+import { addDays } from "date-fns";
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
 
@@ -124,13 +125,54 @@ export async function createLead(data: NewLeadSchema, franchiseSlug: string) {
     franchiseSlug,
   });
 
+  // Create Default Tasks
+  const now = new Date();
+  const defaultTasks = [
+    {
+      title: "Initial Phone Call",
+      type: "call" as const,
+      due_date: now.toISOString(),
+      description: "Follow up on new lead",
+    },
+    {
+      title: "Follow up Phone Call",
+      type: "call" as const,
+      due_date: addDays(now, 2).toISOString(),
+      description: "Second follow up call",
+    },
+    {
+      title: "Review Lead",
+      type: "review" as const,
+      due_date: addDays(now, 4).toISOString(),
+      description: "Review lead status and move to Lost if needed",
+    },
+  ];
+
+  const { error: tasksError } = await supabase.from("tasks").insert(
+    defaultTasks.map((task) => ({
+      franchise_id: franchise.id,
+      lead_id: lead.id,
+      title: task.title,
+      type: task.type,
+      due_date: task.due_date,
+      description: task.description,
+      status: "pending",
+    }))
+  );
+
+  if (tasksError) {
+    console.error("Failed to create default tasks:", tasksError);
+    // Don't fail the whole request, just log it
+  }
+
   revalidatePath(`/dashboard/${franchiseSlug}/pipeline`);
+  revalidatePath(`/dashboard/${franchiseSlug}/actions`);
   return { success: true };
 }
 
 export async function getLeadTasks(leadId: string) {
   const supabase = createClient();
-  
+
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
