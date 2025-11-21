@@ -46,7 +46,7 @@ async function upsertTourTask(params: {
         description,
       })
       .eq("id", existingTask.id);
-    
+
     if (updateError) {
       console.error("Error updating tour task:", updateError);
     }
@@ -82,7 +82,7 @@ async function upsertTourTask(params: {
           type: "tour",
         })
         .eq("id", fallbackTask.id);
-      
+
       if (updateError) {
         console.error("Error updating fallback task:", updateError);
       }
@@ -97,7 +97,7 @@ async function upsertTourTask(params: {
         type: "tour",
         status: "pending",
       });
-      
+
       if (insertError) {
         console.error("Error inserting tour task:", insertError);
         throw insertError;
@@ -223,10 +223,10 @@ function revalidateTourSurfaces(franchiseSlug: string) {
 export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   const supabase = createClient();
 
-  // 1. Get Franchise Settings
+  // 1. Get Franchise ID
   const { data: franchise, error: franchiseError } = await supabase
     .from("franchises")
-    .select("id, settings")
+    .select("id")
     .eq("slug", franchiseSlug)
     .single();
 
@@ -234,37 +234,8 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     return { error: franchiseError?.message || "Franchise not found" };
   }
 
-  // 2. Validate Operating Hours
-  const scheduledDate = new Date(data.scheduledAt);
-  const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][getDay(scheduledDate)];
-  const hour = scheduledDate.getHours();
-
-  const settings = franchise.settings as any;
-  const operatingHours = settings?.operating_hours || {
-    // Default fallback if not set
-    Mon: { open: "10:00", close: "19:00" },
-    Tue: { open: "10:00", close: "19:00" },
-    Wed: { open: "10:00", close: "19:00" },
-    Thu: { open: "10:00", close: "19:00" },
-    Fri: { open: "10:00", close: "19:00" },
-    Sat: { open: "09:00", close: "14:00" },
-    Sun: null, // Closed
-  };
-
-  const dayHours = operatingHours[dayOfWeek];
-
-  if (!dayHours) {
-    return { error: `We are closed on ${dayOfWeek}.` };
-  }
-
-  const openHour = parseTime(dayHours.open);
-  const closeHour = parseTime(dayHours.close);
-
-  if (hour < openHour || hour >= closeHour) {
-    return { error: `Selected time is outside operating hours (${dayHours.open} - ${dayHours.close}).` };
-  }
-
   let leadId = data.leadId;
+
 
   if (!leadId && data.newLead) {
     // Create the lead
@@ -308,7 +279,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     if (guardianError || !insertedGuardian) {
       return { error: guardianError?.message || "Failed to create guardian record" };
     }
-    
+
     // Create student for new lead
     const { error: studentError } = await supabase
       .from("students")
@@ -319,9 +290,9 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
         program_interest: data.newLead.programs
       });
 
-     if (studentError) {
-       console.error("Failed to create student for tour booking:", studentError);
-     }
+    if (studentError) {
+      console.error("Failed to create student for tour booking:", studentError);
+    }
 
     const newLeadId = insertedLead.id;
     leadId = newLeadId;
@@ -374,7 +345,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .eq("id", leadId);
 
   if (updateError) {
-      return { error: updateError.message || "Tour booked but failed to update lead status." };
+    return { error: updateError.message || "Tour booked but failed to update lead status." };
   }
 
   await runAutomations({
@@ -394,7 +365,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
   });
 
   revalidateTourSurfaces(franchiseSlug);
-  
+
   return { success: true };
 }
 
@@ -437,7 +408,7 @@ export async function updateTour(
   }
 
   const scheduledAtIso = data.scheduledAt ?? existingTour.scheduled_at;
-  
+
   // Only update the tour task if the scheduled time changed (not just status)
   // If status changed to completed/no-show, handleTourStatusChange will mark the task as completed
   if (data.scheduledAt && scheduledAtIso && data.status !== "completed" && data.status !== "no-show") {

@@ -93,6 +93,18 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
         </nav>
 
         <div className="p-4 border-t space-y-2">
+          {/* Role Display */}
+          {userRole && (
+            <div className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>
+                {userRole === "franchisee" && "Franchise Owner"}
+                {userRole === "center_director" && "Center Director"}
+                {userRole === "sensei" && "Sensei"}
+              </span>
+            </div>
+          )}
+
           {userRole === "franchisee" && assignedFranchises.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
