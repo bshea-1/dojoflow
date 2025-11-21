@@ -12,9 +12,8 @@ export default async function ActionsPage({ params }: { params: { slug: string }
     .select("role")
     .eq("id", user?.id || "")
     .single();
-  
+
   const role = profile?.role || "sensei";
-  const isReadOnly = role === "sensei";
 
   const tasks = await getTasks(params.slug);
 
@@ -23,12 +22,12 @@ export default async function ActionsPage({ params }: { params: { slug: string }
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Actions & Tasks</h1>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto pb-10">
-        <ActionList 
-          franchiseSlug={params.slug} 
-          initialTasks={tasks} 
-          isReadOnly={isReadOnly}
+        <ActionList
+          franchiseSlug={params.slug}
+          initialTasks={tasks}
+          userRole={role}
         />
       </div>
     </div>

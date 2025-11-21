@@ -56,7 +56,7 @@ interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaveAndAdd?: () => void;
-  isReadOnly?: boolean;
+  userRole?: string;
 }
 
 const OUTCOME_OPTIONS = [
@@ -79,7 +79,7 @@ export function TaskDetailDialog({
   open,
   onOpenChange,
   onSaveAndAdd,
-  isReadOnly = false
+  userRole = "sensei"
 }: TaskDetailDialogProps) {
   const queryClient = useQueryClient();
   const [outcome, setOutcome] = useState<string>(task.outcome || "");
@@ -171,7 +171,7 @@ export function TaskDetailDialog({
               {getIcon(task.type)}
               <DialogTitle>{task.title}</DialogTitle>
             </div>
-            {!isReadOnly && (
+            {userRole !== "sensei" && (task.status === "pending" || userRole === "franchisee") && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -243,7 +243,7 @@ export function TaskDetailDialog({
 
             <div className="space-y-2">
               <label className="text-xs font-medium">Outcome / Result</label>
-              <Select value={outcome} onValueChange={setOutcome} disabled={isReadOnly}>
+              <Select value={outcome} onValueChange={setOutcome} disabled={userRole === "sensei"}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select outcome..." />
                 </SelectTrigger>
@@ -260,7 +260,7 @@ export function TaskDetailDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          {!isReadOnly ? (
+          {userRole !== "sensei" ? (
             <>
               <Button
                 variant="outline"

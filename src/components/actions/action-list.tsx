@@ -48,10 +48,10 @@ type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
 interface ActionListProps {
   franchiseSlug: string;
   initialTasks: Task[];
-  isReadOnly?: boolean;
+  userRole?: string;
 }
 
-export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: ActionListProps) {
+export function ActionList({ franchiseSlug, initialTasks, userRole = "sensei" }: ActionListProps) {
   const queryClient = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskType, setNewTaskType] = useState<"call" | "email" | "text" | "review" | "tour" | "other">("call");
@@ -173,7 +173,7 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
                 )}
               </div>
             </div>
-            {!isReadOnly && (
+            {userRole !== "sensei" && (task.status === "pending" || userRole === "franchisee") && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -195,7 +195,7 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
   return (
     <div className="space-y-6">
       {/* Quick Add */}
-      {!isReadOnly && (
+      {userRole !== "sensei" && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-medium">Quick Add Task</CardTitle>
@@ -332,7 +332,7 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
           onSaveAndAdd={() => setSelectedTask(null)}
-          isReadOnly={isReadOnly}
+          userRole={userRole}
         />
       )}
     </div>
