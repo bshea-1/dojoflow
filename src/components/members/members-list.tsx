@@ -40,6 +40,7 @@ import { EditLeadSchema } from "@/lib/schemas/edit-lead";
 import type { Member as MemberType } from "@/app/dashboard/[slug]/members/actions";
 import { programLeadOptions } from "@/lib/schemas/book-tour";
 import { FamilyProfileDialog } from "./family-profile-dialog";
+import { ComposeMessageDialog } from "@/components/communication/compose-message-dialog";
 
 interface MembersListProps {
   initialMembers: MemberType[];
@@ -61,6 +62,11 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [editingMember, setEditingMember] = useState<MemberType | null>(null);
   const [viewingMember, setViewingMember] = useState<MemberType | null>(null);
+  const [composeMessage, setComposeMessage] = useState<{
+    open: boolean;
+    recipients: MemberType[];
+    defaultTab: "email" | "sms";
+  }>({ open: false, recipients: [], defaultTab: "email" });
 
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
@@ -97,17 +103,24 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
 
   const handleBulkAction = (action: "email" | "sms") => {
     if (selectedMembers.length === 0) return;
-    toast.success(
-      `Mock: Sending ${action} to ${selectedMembers.length} members.`
-    );
+    const recipients = members.filter((m) => selectedMembers.includes(m.id));
+    setComposeMessage({
+      open: true,
+      recipients,
+      defaultTab: action,
+    });
     setSelectedMembers([]);
   };
 
   const handleIndividualAction = (
-    memberName: string,
+    member: MemberType,
     action: "email" | "sms"
   ) => {
-    toast.success(`Mock: Sending ${action} to ${memberName}.`);
+    setComposeMessage({
+      open: true,
+      recipients: [member],
+      defaultTab: action,
+    });
   };
 
   const handleEditSaved = (values: EditLeadSchema) => {
@@ -286,14 +299,14 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
                         View Profile
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleIndividualAction(`${member.guardianFirstName} ${member.guardianLastName}`, "email")}
+                        onClick={() => handleIndividualAction(member, "email")}
                       >
-                        Email Guardian
+                        Email Family
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleIndividualAction(`${member.guardianFirstName} ${member.guardianLastName}`, "sms")}
+                        onClick={() => handleIndividualAction(member, "sms")}
                       >
-                        SMS Guardian
+                        SMS Family
                       </DropdownMenuItem>
                       {!isReadOnly && (
                         <DropdownMenuItem onClick={() => setEditingMember(member)}>
@@ -357,6 +370,17 @@ export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false
           isReadOnly={isReadOnly}
         />
       )}
+
+      <ComposeMessageDialog
+        open={composeMessage.open}
+        onOpenChange={(open) => setComposeMessage((prev) => ({ ...prev, open }))}
+        recipients={composeMessage.recipients.map((m) => ({
+          name: `${m.guardianFirstName} ${m.guardianLastName}`,
+          email: m.email,
+          phone: m.phone,
+        }))}
+        defaultTab={composeMessage.defaultTab}
+      />
     </div>
   );
 }
