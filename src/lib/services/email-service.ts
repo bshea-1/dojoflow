@@ -149,3 +149,123 @@ export function isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
+
+/**
+ * Send batch emails
+ */
+export async function sendBatchEmails(emails: SendEmailParams[]) {
+    const resend = getResendClient();
+    try {
+        const batchPayload = emails.map(email => ({
+            from: email.from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+            to: email.to.map(r => r.email),
+            subject: email.subject,
+            html: email.htmlBody,
+            reply_to: email.replyTo,
+        }));
+
+        const { data, error } = await resend.batch.send(batchPayload);
+
+        if (error) {
+            console.error("Resend Batch API error:", error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error("Failed to send batch emails:", error);
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * Retrieve an email
+ */
+export async function getEmail(emailId: string) {
+    const resend = getResendClient();
+    try {
+        const { data, error } = await resend.emails.get(emailId);
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * Update an email (scheduled)
+ */
+export async function updateEmail(emailId: string, scheduledAt: string) {
+    const resend = getResendClient();
+    try {
+        const { data, error } = await resend.emails.update({
+            id: emailId,
+            scheduledAt,
+        });
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * Cancel an email
+ */
+export async function cancelEmail(emailId: string) {
+    const resend = getResendClient();
+    try {
+        const { data, error } = await resend.emails.cancel(emailId);
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * List emails
+ */
+export async function listEmails() {
+    const resend = getResendClient();
+    try {
+        const { data, error } = await resend.emails.list();
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * List attachments
+ */
+export async function listAttachments(emailId: string) {
+    const resend = getResendClient();
+    try {
+        // @ts-ignore - The types might not be fully up to date in the installed version
+        const { data, error } = await resend.emails.attachments.list({ emailId });
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
+
+/**
+ * Retrieve attachment
+ */
+export async function getAttachment(emailId: string, attachmentId: string) {
+    const resend = getResendClient();
+    try {
+        // @ts-ignore
+        const { data, error } = await resend.emails.attachments.get({
+            id: attachmentId,
+            emailId,
+        });
+        if (error) throw new Error(error.message);
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
