@@ -13,18 +13,42 @@ function parseTime(timeStr: string) {
   return hours;
 }
 
-// Helper to format Date as ISO string in local timezone (not UTC)
-// This prevents timezone conversion issues when storing scheduled times
-function toLocalISOString(date: Date): string {
+// Helper to convert a Date to EST timezone and return as ISO string
+// EST is UTC-5 (or UTC-4 during daylight saving time - EDT)
+// This ensures all tour times are stored and displayed consistently in EST
+// The input date should represent the time as the user entered it (treating as EST)
+function toESTISOString(date: Date): string {
+  // Get the date components - treat these as EST time
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  const ms = String(date.getMilliseconds()).padStart(3, '0');
+  const month = date.getMonth();
+  const day = date.getDate();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
+  const ms = date.getMilliseconds();
 
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}`;
+  // Determine if DST is in effect for EST/EDT on this date
+  // DST in US starts 2nd Sunday in March, ends 1st Sunday in November
+  // Calculate 2nd Sunday in March
+  const march1 = new Date(year, 2, 1);
+  const marchFirstSunday = 7 - march1.getDay();
+  const dstStart = new Date(year, 2, marchFirstSunday + 7);
+  
+  // Calculate 1st Sunday in November
+  const nov1 = new Date(year, 10, 1);
+  const novFirstSunday = 7 - nov1.getDay();
+  const dstEnd = new Date(year, 10, novFirstSunday);
+  
+  const testDate = new Date(year, month, day);
+  const isDST = testDate >= dstStart && testDate < dstEnd;
+  const estOffsetHours = isDST ? 4 : 5; // EDT is UTC-4, EST is UTC-5
+
+  // Create UTC date by adding EST offset (EST is behind UTC)
+  // If it's 4pm EST, that's 9pm UTC (EST is UTC-5, so add 5 hours)
+  // If it's 4pm EDT, that's 8pm UTC (EDT is UTC-4, so add 4 hours)
+  const utcDate = new Date(Date.UTC(year, month, day, hours + estOffsetHours, minutes, seconds, ms));
+
+  return utcDate.toISOString();
 }
 
 type TourStatus = Database["public"]["Tables"]["tours"]["Row"]["status"];
@@ -39,7 +63,26 @@ async function upsertTourTask(params: {
   scheduledAt: string;
 }) {
   const { supabase, franchiseId, leadId, tourId, scheduledAt } = params;
-  const friendlyDate = format(new Date(scheduledAt), "MMM d, yyyy h:mm a");
+  // Convert UTC date back to EST for display
+  // scheduledAt is stored as UTC but represents EST time
+  const utcDate = new Date(scheduledAt);
+  // EST is UTC-5 or UTC-4 (EDT)
+  const year = utcDate.getUTCFullYear();
+  const month = utcDate.getUTCMonth();
+  const day = utcDate.getUTCDate();
+  const hours = utcDate.getUTCHours();
+  const minutes = utcDate.getUTCMinutes();
+  
+  // Determine if DST is in effect
+  const dstStart = new Date(year, 2, 14 - (new Date(year, 2, 1).getDay() + 1) % 7);
+  const dstEnd = new Date(year, 10, 7 - (new Date(year, 10, 1).getDay() + 1) % 7);
+  const testDate = new Date(year, month, day);
+  const isDST = testDate >= dstStart && testDate < dstEnd;
+  const estOffsetHours = isDST ? 4 : 5;
+  
+  // Convert UTC to EST
+  const estDate = new Date(Date.UTC(year, month, day, hours - estOffsetHours, minutes));
+  const friendlyDate = format(estDate, "MMM d, yyyy h:mm a");
   const description = `Tour scheduled for ${friendlyDate}`;
 
   const { data: existingTask, error: fetchError } = await supabase
@@ -192,13 +235,17 @@ async function handleTourStatusChange(params: {
     newTourStatus === "completed" ? "Tour Completed" : "Tour Not Completed";
 
   // Mark the tour task as completed
-  await supabase
+  const { error: taskUpdateError } = await supabase
     .from("tasks")
     .update({
       status: "completed",
       outcome: outcomeLabel,
     })
     .eq("tour_id", tourId);
+
+  if (taskUpdateError) {
+    console.error("Error updating tour task status:", taskUpdateError);
+  }
 
   // Calculate follow-up date as start of next day (9 AM)
   const tourDate = new Date(scheduledAt);
@@ -329,7 +376,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .insert({
       franchise_id: franchise.id,
       lead_id: leadId,
-      scheduled_at: toLocalISOString(data.scheduledAt),
+      scheduled_at: toESTISOString(data.scheduledAt),
       status: "scheduled",
     })
     .select()
@@ -345,7 +392,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       franchiseId: franchise.id,
       leadId,
       tourId: tour.id,
-      scheduledAt: toLocalISOString(data.scheduledAt),
+      scheduledAt: toESTISOString(data.scheduledAt),
     });
   } catch (taskError: any) {
     console.error("Error creating tour task:", taskError);
@@ -402,7 +449,8 @@ export async function updateTour(
 
   const updates: Record<string, any> = {};
   if (data.scheduledAt) {
-    updates.scheduled_at = data.scheduledAt;
+    // Convert to EST before storing
+    updates.scheduled_at = toESTISOString(new Date(data.scheduledAt));
   }
   if (data.status) {
     updates.status = data.status;
@@ -421,11 +469,11 @@ export async function updateTour(
     return { error: error.message };
   }
 
-  const scheduledAtIso = data.scheduledAt ?? existingTour.scheduled_at;
+  const scheduledAtIso = updates.scheduled_at ?? existingTour.scheduled_at;
 
   // Only update the tour task if the scheduled time changed (not just status)
   // If status changed to completed/no-show, handleTourStatusChange will mark the task as completed
-  if (data.scheduledAt && scheduledAtIso && data.status !== "completed" && data.status !== "no-show") {
+  if (updates.scheduled_at && scheduledAtIso && data.status !== "completed" && data.status !== "no-show") {
     await upsertTourTask({
       supabase,
       franchiseId: existingTour.franchise_id,
