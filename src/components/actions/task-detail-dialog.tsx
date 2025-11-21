@@ -243,7 +243,7 @@ export function TaskDetailDialog({
 
             <div className="space-y-2">
               <label className="text-xs font-medium">Outcome / Result</label>
-              <Select value={outcome} onValueChange={setOutcome} disabled={userRole === "sensei"}>
+              <Select value={outcome} onValueChange={setOutcome} disabled={userRole === "sensei" || task.status === "completed"}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select outcome..." />
                 </SelectTrigger>
@@ -260,7 +260,7 @@ export function TaskDetailDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          {userRole !== "sensei" ? (
+          {userRole !== "sensei" && task.status === "pending" ? (
             <>
               <Button
                 variant="outline"
