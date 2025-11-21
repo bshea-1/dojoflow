@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +33,15 @@ export function ComposeMessageDialog({
     const [isSending, setIsSending] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Sync activeTab with defaultTab prop changes
+    useEffect(() => {
+        setActiveTab(defaultTab);
+    }, [defaultTab]);
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+            setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]
+            );
         }
     };
 
