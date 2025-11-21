@@ -7,49 +7,7 @@ import { addDays, format, getDay } from "date-fns";
 import { runAutomations } from "@/lib/automations/run-automations";
 import { Database } from "@/types/supabase";
 
-// Helper to parse time string "HH:mm" to hours
-function parseTime(timeStr: string) {
-  const [hours] = timeStr.split(":").map(Number);
-  return hours;
-}
 
-// Helper to convert a Date to EST timezone and return as ISO string
-// EST is UTC-5 (or UTC-4 during daylight saving time - EDT)
-// This ensures all tour times are stored and displayed consistently in EST
-// The input date should represent the time as the user entered it (treating as EST)
-function toESTISOString(date: Date): string {
-  // Get the date components - treat these as EST time
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
-  const ms = date.getMilliseconds();
-
-  // Determine if DST is in effect for EST/EDT on this date
-  // DST in US starts 2nd Sunday in March, ends 1st Sunday in November
-  // Calculate 2nd Sunday in March
-  const march1 = new Date(year, 2, 1);
-  const marchFirstSunday = 7 - march1.getDay();
-  const dstStart = new Date(year, 2, marchFirstSunday + 7);
-  
-  // Calculate 1st Sunday in November
-  const nov1 = new Date(year, 10, 1);
-  const novFirstSunday = 7 - nov1.getDay();
-  const dstEnd = new Date(year, 10, novFirstSunday);
-  
-  const testDate = new Date(year, month, day);
-  const isDST = testDate >= dstStart && testDate < dstEnd;
-  const estOffsetHours = isDST ? 4 : 5; // EDT is UTC-4, EST is UTC-5
-
-  // Create UTC date by adding EST offset (EST is behind UTC)
-  // If it's 4pm EST, that's 9pm UTC (EST is UTC-5, so add 5 hours)
-  // If it's 4pm EDT, that's 8pm UTC (EDT is UTC-4, so add 4 hours)
-  const utcDate = new Date(Date.UTC(year, month, day, hours + estOffsetHours, minutes, seconds, ms));
-
-  return utcDate.toISOString();
-}
 
 type TourStatus = Database["public"]["Tables"]["tours"]["Row"]["status"];
 
@@ -72,14 +30,14 @@ async function upsertTourTask(params: {
   const day = utcDate.getUTCDate();
   const hours = utcDate.getUTCHours();
   const minutes = utcDate.getUTCMinutes();
-  
+
   // Determine if DST is in effect
   const dstStart = new Date(year, 2, 14 - (new Date(year, 2, 1).getDay() + 1) % 7);
   const dstEnd = new Date(year, 10, 7 - (new Date(year, 10, 1).getDay() + 1) % 7);
   const testDate = new Date(year, month, day);
   const isDST = testDate >= dstStart && testDate < dstEnd;
   const estOffsetHours = isDST ? 4 : 5;
-  
+
   // Convert UTC to EST
   const estDate = new Date(Date.UTC(year, month, day, hours - estOffsetHours, minutes));
   const friendlyDate = format(estDate, "MMM d, yyyy h:mm a");
@@ -376,7 +334,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .insert({
       franchise_id: franchise.id,
       lead_id: leadId,
-      scheduled_at: toESTISOString(data.scheduledAt),
+      scheduled_at: data.scheduledAt.toISOString(),
       status: "scheduled",
     })
     .select()
@@ -392,7 +350,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       franchiseId: franchise.id,
       leadId,
       tourId: tour.id,
-      scheduledAt: toESTISOString(data.scheduledAt),
+      scheduledAt: data.scheduledAt.toISOString(),
     });
   } catch (taskError: any) {
     console.error("Error creating tour task:", taskError);
@@ -450,7 +408,7 @@ export async function updateTour(
   const updates: Record<string, any> = {};
   if (data.scheduledAt) {
     // Convert to EST before storing
-    updates.scheduled_at = toESTISOString(new Date(data.scheduledAt));
+    updates.scheduled_at = new Date(data.scheduledAt).toISOString();
   }
   if (data.status) {
     updates.status = data.status;
