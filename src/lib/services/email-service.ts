@@ -1,7 +1,6 @@
 "use server";
 
-import formData from "form-data";
-import Mailgun from "mailgun.js";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 interface EmailRecipient {
     email: string;
@@ -16,57 +15,73 @@ interface SendEmailParams {
 }
 
 /**
- * Initialize Mailgun client
+ * Initialize AWS SES client
  */
-function getMailgunClient() {
-    const apiKey = process.env.MAILGUN_API_KEY;
-    const domain = process.env.MAILGUN_DOMAIN;
+function getSESClient() {
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    const region = process.env.AWS_REGION || "us-east-1";
 
-    if (!apiKey || !domain) {
+    if (!accessKeyId || !secretAccessKey) {
         throw new Error(
-            "Missing Mailgun credentials. Please configure MAILGUN_API_KEY and MAILGUN_DOMAIN in your environment variables."
+            "Missing AWS credentials. Please configure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your environment variables."
         );
     }
 
-    const mailgun = new Mailgun(formData);
-    return mailgun.client({ username: "api", key: apiKey });
+    return new SESClient({
+        region,
+        credentials: {
+            accessKeyId,
+            secretAccessKey,
+        },
+    });
 }
 
 /**
- * Send email using Mailgun API
+ * Send email using Amazon SES
  */
-export async function sendEmailViaMailgun({
+export async function sendEmailViaSES({
     to,
     subject,
     htmlBody,
     from,
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
-        const mg = getMailgunClient();
-        const domain = process.env.MAILGUN_DOMAIN;
-        const fromEmail = from || process.env.MAILGUN_FROM_EMAIL || "noreply@" + domain;
+        const ses = getSESClient();
+        const fromEmail = from || process.env.AWS_FROM_EMAIL;
 
-        if (!domain) {
-            throw new Error("MAILGUN_DOMAIN is not configured");
+        if (!fromEmail) {
+            throw new Error("AWS_FROM_EMAIL is not configured");
         }
 
-        // Prepare recipients - Mailgun accepts array of email strings or "Name <email>" format
-        const recipients = to.map((recipient) =>
-            recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email
-        );
+        // SES sends to a list of addresses
+        const recipientAddresses = to.map((r) => r.email);
 
-        // Send email using Mailgun
-        const result = await mg.messages.create(domain, {
-            from: fromEmail,
-            to: recipients,
-            subject,
-            html: htmlBody,
+        const command = new SendEmailCommand({
+            Destination: {
+                ToAddresses: recipientAddresses,
+            },
+            Message: {
+                Body: {
+                    Html: {
+                        Charset: "UTF-8",
+                        Data: htmlBody,
+                    },
+                },
+                Subject: {
+                    Charset: "UTF-8",
+                    Data: subject,
+                },
+            },
+            Source: fromEmail,
         });
 
-        console.log(`Email sent successfully via Mailgun to ${to.length} recipient(s)`, result);
+        const result = await ses.send(command);
+
+        console.log(`Email sent successfully via SES to ${to.length} recipient(s)`, result.MessageId);
         return { success: true };
     } catch (error) {
-        console.error("Failed to send email via Mailgun:", error);
+        console.error("Failed to send email via SES:", error);
 
         let errorMessage = "Failed to send email";
         if (error instanceof Error) {

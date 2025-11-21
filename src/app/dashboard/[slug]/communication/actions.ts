@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { sendEmailViaMailgun, isValidEmail } from "@/lib/services/email-service";
+import { sendEmailViaSES, isValidEmail } from "@/lib/services/email-service";
 
 export async function sendEmail(
     recipients: string[],
@@ -20,14 +20,14 @@ export async function sendEmail(
             };
         }
 
-        // Prepare recipients for Mailgun API
+        // Prepare recipients for SES
         const emailRecipients = validRecipients.map(email => ({
             email,
             name: email.split('@')[0], // Use email prefix as name
         }));
 
-        // Send email via Mailgun
-        const result = await sendEmailViaMailgun({
+        // Send email via Amazon SES
+        const result = await sendEmailViaSES({
             to: emailRecipients,
             subject,
             htmlBody: body, // Body is already HTML from RichTextEditor
