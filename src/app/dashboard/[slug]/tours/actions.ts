@@ -13,6 +13,20 @@ function parseTime(timeStr: string) {
   return hours;
 }
 
+// Helper to format Date as ISO string in local timezone (not UTC)
+// This prevents timezone conversion issues when storing scheduled times
+function toLocalISOString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ms = String(date.getMilliseconds()).padStart(3, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}`;
+}
+
 type TourStatus = Database["public"]["Tables"]["tours"]["Row"]["status"];
 
 type LeadStatus = Database["public"]["Tables"]["leads"]["Row"]["status"];
@@ -315,7 +329,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
     .insert({
       franchise_id: franchise.id,
       lead_id: leadId,
-      scheduled_at: data.scheduledAt.toISOString(),
+      scheduled_at: toLocalISOString(data.scheduledAt),
       status: "scheduled",
     })
     .select()
@@ -331,7 +345,7 @@ export async function bookTour(data: BookTourSchema, franchiseSlug: string) {
       franchiseId: franchise.id,
       leadId,
       tourId: tour.id,
-      scheduledAt: data.scheduledAt.toISOString(),
+      scheduledAt: toLocalISOString(data.scheduledAt),
     });
   } catch (taskError: any) {
     console.error("Error creating tour task:", taskError);

@@ -356,8 +356,14 @@ export function BookTourDialog({
                           : ""
                       }
                       onChange={(e) => {
-                        const date = new Date(e.target.value);
-                        field.onChange(date);
+                        // datetime-local returns YYYY-MM-DDTHH:mm in local time
+                        // We need to preserve this as local time, not convert to UTC
+                        const localDateTimeString = e.target.value;
+                        if (localDateTimeString) {
+                          // Create a date object that represents this local time
+                          const date = new Date(localDateTimeString);
+                          field.onChange(date);
+                        }
                       }}
                     />
                   </FormControl>
