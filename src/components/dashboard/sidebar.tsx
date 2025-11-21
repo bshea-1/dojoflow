@@ -54,6 +54,17 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
     localStorage.setItem("roleView", newRoleView);
     // Dispatch custom event to notify other components
     window.dispatchEvent(new Event("roleViewChange"));
+
+    // Navigate to the first available tab for this role
+    const newFilteredLinks = links.filter(link => link.roles.includes(newRoleView));
+    if (newFilteredLinks.length > 0) {
+      // Check if current page is available in new role view
+      const currentPageAvailable = newFilteredLinks.some(link => pathname === link.href);
+      if (!currentPageAvailable) {
+        // Navigate to first available tab
+        router.push(newFilteredLinks[0].href);
+      }
+    }
   };
 
   const links = [

@@ -22,17 +22,17 @@ export function ViewModeBanner({ userRole }: ViewModeBannerProps) {
         setMounted(true);
         const savedRoleView = localStorage.getItem("roleView");
         setRoleView(savedRoleView || userRole || "");
-        
+
         // Listen for changes to roleView in localStorage
         const handleStorageChange = () => {
             const newRoleView = localStorage.getItem("roleView");
             setRoleView(newRoleView || userRole || "");
         };
-        
+
         window.addEventListener("storage", handleStorageChange);
         // Also listen for custom event for same-tab updates
         window.addEventListener("roleViewChange", handleStorageChange);
-        
+
         return () => {
             window.removeEventListener("storage", handleStorageChange);
             window.removeEventListener("roleViewChange", handleStorageChange);
