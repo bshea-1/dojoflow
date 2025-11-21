@@ -36,10 +36,10 @@ This guide will walk you through setting up Resend to send emails from your CRM.
    ```env
    # Resend Configuration
    RESEND_API_KEY=re_123456789
-   RESEND_FROM_EMAIL=onboarding@resend.dev
+   RESEND_FROM_EMAIL=codenfl@outlook.com
    ```
 
-   *Note: Until you verify your own domain, you MUST use `onboarding@resend.dev` as the sender.*
+   *Note: Resend typically requires a verified domain to send from custom emails. If this doesn't work, switch back to `onboarding@resend.dev`.*
 
 3. **Save the File**
 
