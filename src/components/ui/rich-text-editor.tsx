@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
+import { useMemo } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
@@ -16,17 +17,19 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
+    const extensions = useMemo(() => [
+        StarterKit,
+        // Underline,
+        // Link.configure({
+        //     openOnClick: false,
+        //     HTMLAttributes: {
+        //         class: "text-primary underline",
+        //     },
+        // }),
+    ], []);
+
     const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Underline,
-            Link.configure({
-                openOnClick: false,
-                HTMLAttributes: {
-                    class: "text-primary underline",
-                },
-            }),
-        ],
+        extensions,
         content: value,
         editorProps: {
             attributes: {
