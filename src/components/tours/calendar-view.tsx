@@ -155,15 +155,11 @@ export function CalendarView({
 
     if (over && active.id !== over.id) {
       const tourId = active.id as string;
-      const { date, hour } = over.data.current as { date: Date; hour: number };
+      const { date } = over.data.current as { date: Date; hour: number };
 
-      // Set the new time
-      const newDate = new Date(date);
-      newDate.setHours(hour, 0, 0, 0);
-
-      // Optimistic update could happen here, but for now we'll rely on server revalidation
+      // Use the date directly from the droppable slot (already has correct hour set)
       toast.promise(
-        updateTour(tourId, { scheduledAt: newDate.toISOString() }, franchiseSlug),
+        updateTour(tourId, { scheduledAt: date.toISOString() }, franchiseSlug),
         {
           loading: "Rescheduling tour...",
           success: "Tour rescheduled successfully",
