@@ -47,6 +47,33 @@ export async function updateLeadStatus(leadId: string, newStatus: LeadStatus, fr
         franchiseSlug,
         context: automationContext,
       });
+
+      // Default Tour Tasks
+      const now = new Date();
+      if (newStatus === "tour_booked") {
+        // Task: Confirm Tour (Due: Now, or maybe 1 day before scheduled? 
+        // Since we don't have the scheduled date easily here without fetching tour, let's set to Now)
+        await supabase.from("tasks").insert({
+          franchise_id: leadRecord.franchise_id,
+          lead_id: leadId,
+          title: "Confirm Tour Appointment",
+          type: "call",
+          due_date: now.toISOString(),
+          description: "Call to confirm upcoming tour",
+          status: "pending"
+        });
+      } else if (newStatus === "tour_completed") {
+        // Task: Follow up on Tour (Due: +1 day)
+        await supabase.from("tasks").insert({
+          franchise_id: leadRecord.franchise_id,
+          lead_id: leadId,
+          title: "Follow up on Tour",
+          type: "call",
+          due_date: addDays(now, 1).toISOString(),
+          description: "Follow up call after tour completion",
+          status: "pending"
+        });
+      }
     }
   }
 

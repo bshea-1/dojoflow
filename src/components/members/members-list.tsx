@@ -47,9 +47,9 @@ interface MembersListProps {
 }
 
 const formatStatus = (status?: string | null) =>
-  status ? status.replace(/_/g, " ") : "Active";
+  status ? status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) : "Active";
 
-export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false }: MembersListProps) {
+export function FamiliesList({ initialMembers, franchiseSlug, isReadOnly = false }: MembersListProps) {
   const [members, setMembers] = useState(initialMembers);
   useEffect(() => {
     setMembers(initialMembers);
@@ -57,6 +57,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [programFilters, setProgramFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [editingMember, setEditingMember] = useState<MemberType | null>(null);
 
   const filteredMembers = useMemo(() => {
@@ -64,15 +65,19 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
       const matchesSearch =
         member.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         `${member.guardianFirstName} ${member.guardianLastName}`.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesProgram =
         programFilters.length === 0 ||
         (Array.isArray(member.program) &&
           member.program.some((p) => programFilters.includes(p)));
 
-      return matchesSearch && matchesProgram;
+      const matchesStatus =
+        statusFilters.length === 0 ||
+        (member.status && statusFilters.includes(member.status));
+
+      return matchesSearch && matchesProgram && matchesStatus;
     });
-  }, [members, searchQuery, programFilters]);
+  }, [members, searchQuery, programFilters, statusFilters]);
 
   const toggleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -109,16 +114,16 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
       prev.map((member) =>
         member.id === editingMember.id
           ? {
-              ...member,
-              guardianFirstName: values.guardianFirstName,
-              guardianLastName: values.guardianLastName,
-              email: values.guardianEmail,
-              phone: values.guardianPhone,
-              studentName: values.studentFirstName,
-              program: values.studentProgram,
-              source: values.source,
-              notes: values.notes,
-            }
+            ...member,
+            guardianFirstName: values.guardianFirstName,
+            guardianLastName: values.guardianLastName,
+            email: values.guardianEmail,
+            phone: values.guardianPhone,
+            studentName: values.studentFirstName,
+            program: values.studentProgram,
+            source: values.source,
+            notes: values.notes,
+          }
           : member
       )
     );
@@ -165,7 +170,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Program {programFilters.length > 0 && `(${programFilters.length})`}
+              Lead Path {programFilters.length > 0 && `(${programFilters.length})`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -182,6 +187,32 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                 }
               >
                 {program.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Status {statusFilters.length > 0 && `(${statusFilters.length})`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {["new", "contacted", "tour_booked", "tour_completed", "tour_not_completed", "enrolled", "lost"].map((status) => (
+              <DropdownMenuCheckboxItem
+                key={status}
+                checked={statusFilters.includes(status)}
+                onCheckedChange={(checked) =>
+                  setStatusFilters((prev) =>
+                    checked
+                      ? [...prev, status]
+                      : prev.filter((s) => s !== status)
+                  )
+                }
+              >
+                {formatStatus(status)}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -227,7 +258,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                 </TableCell>
                 <TableCell>{member.studentName}</TableCell>
                 <TableCell className="capitalize">
-                  {member.program.map(p => 
+                  {member.program.map(p =>
                     programLeadOptions.find(opt => opt.value === p)?.label || p
                   ).join(", ") || "N/A"}
                 </TableCell>
@@ -241,7 +272,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                   <div className="text-xs text-muted-foreground">{member.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                    <DropdownMenu>
+                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
@@ -275,7 +306,7 @@ export function MembersList({ initialMembers, franchiseSlug, isReadOnly = false 
                   colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  No members match your filters.
+                  No families match your filters.
                 </TableCell>
               </TableRow>
             )}

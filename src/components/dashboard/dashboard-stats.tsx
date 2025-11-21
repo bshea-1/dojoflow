@@ -93,7 +93,7 @@ function SemiCircleGauge({
   direction?: GaugeDirection;
 }) {
   const isZero = value === 0;
-  const displayValue = isZero ? 2 : value; 
+  const displayValue = isZero ? 2 : value;
   const displayColor = getGaugeColor(value, direction);
 
   const trackData = [{ name: "track", value: 100 }];
@@ -132,29 +132,29 @@ function SemiCircleGauge({
 
         <div className="relative z-10 w-full h-full">
           <ResponsiveContainer width="100%" height="200%">
-          <RadialBarChart
-            cx="50%"
-            cy="50%"
-            innerRadius="82%"
-            outerRadius="98%"
-            barSize={18}
-            data={valueData}
-            startAngle={180}
-            endAngle={0}
-          >
-            <PolarAngleAxis
-              type="number"
-              domain={[0, 100]}
-              angleAxisId={0}
-              tick={false}
-            />
-            <RadialBar
-              dataKey="value"
-              fill={displayColor}
-              isAnimationActive
-              cornerRadius={10}
-            />
-          </RadialBarChart>
+            <RadialBarChart
+              cx="50%"
+              cy="50%"
+              innerRadius="82%"
+              outerRadius="98%"
+              barSize={18}
+              data={valueData}
+              startAngle={180}
+              endAngle={0}
+            >
+              <PolarAngleAxis
+                type="number"
+                domain={[0, 100]}
+                angleAxisId={0}
+                tick={false}
+              />
+              <RadialBar
+                dataKey="value"
+                fill={displayColor}
+                isAnimationActive
+                cornerRadius={10}
+              />
+            </RadialBarChart>
           </ResponsiveContainer>
         </div>
         <div className="absolute bottom-0 mb-4 text-center">
@@ -199,7 +199,7 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
           </div>
         </div>
       </div>
-      
+
       {showLtv && (
         <Card className="border-none shadow-sm bg-white">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -233,18 +233,18 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <SemiCircleGauge 
-              value={stats.quickStats.fastToursPercent} 
+            <SemiCircleGauge
+              value={stats.quickStats.fastToursPercent}
               label="Families Completing Tours Within 72 Hours"
               direction="good-high"
             />
-             <SemiCircleGauge 
-              value={stats.quickStats.overdueTasksPercent} 
+            <SemiCircleGauge
+              value={stats.quickStats.overdueTasksPercent}
               label="Tasks That Are Past Due"
               direction="good-low"
             />
-             <SemiCircleGauge 
-              value={stats.quickStats.waitlistPercent} 
+            <SemiCircleGauge
+              value={stats.quickStats.waitlistPercent}
               label="New Families Getting To Wait List or Registered"
               direction="good-high"
             />
@@ -254,7 +254,7 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
 
       {/* Middle Row: Children by Status & Conversion Success */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* Children by Status */}
         <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -264,36 +264,36 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
           <CardContent>
             <div className="h-[300px] mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.childrenByStatus}>
+                <BarChart data={stats.childrenByStatus.filter(item => item.name !== "Admin")}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    fontSize={11} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <XAxis
+                    dataKey="name"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
                     interval={0}
                     dy={10}
                   />
-                  <YAxis 
-                    fontSize={11} 
-                    tickLine={false} 
-                    axisLine={false} 
+                  <YAxis
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: '#f4f4f5' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="value" fill="#a855f7" radius={[4, 4, 0, 0]}>
-                     {stats.childrenByStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#a855f7" />
-                      ))}
+                    {stats.childrenByStatus.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="#a855f7" />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center mt-4 items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
-                <span className="text-xs font-medium">{userName || "Franchise"}</span>
+              <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
+              <span className="text-xs font-medium">{userName || "Franchise"}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Note: Families without any children in the system are assumed to have one child.
@@ -308,28 +308,28 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
             <MoreVertical className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             <div className="grid grid-cols-2 gap-6">
-                <SemiCircleGauge 
-                  value={stats.conversionStats.newToTourScheduledPercent} 
-                  label="New Families Getting to Tour Scheduled"
-                  direction="good-high"
-                />
-                <SemiCircleGauge 
-                  value={stats.conversionStats.newToTourCompletedPercent} 
-                  label="New Families Getting To Tour Completed"
-                  direction="good-high"
-                />
-                <SemiCircleGauge 
-                  value={stats.conversionStats.scheduledToCompletedPercent} 
-                  label="Scheduled Tours Getting Completed"
-                  direction="good-high"
-                />
-                <SemiCircleGauge 
-                  value={stats.conversionStats.registeredAfterTourPercent} 
-                  label="Children Registered After Tour Completion"
-                  direction="good-high"
-                />
-             </div>
+            <div className="grid grid-cols-2 gap-6">
+              <SemiCircleGauge
+                value={stats.conversionStats.newToTourScheduledPercent}
+                label="New Families Getting to Tour Scheduled"
+                direction="good-high"
+              />
+              <SemiCircleGauge
+                value={stats.conversionStats.newToTourCompletedPercent}
+                label="New Families Getting To Tour Completed"
+                direction="good-high"
+              />
+              <SemiCircleGauge
+                value={stats.conversionStats.scheduledToCompletedPercent}
+                label="Scheduled Tours Getting Completed"
+                direction="good-high"
+              />
+              <SemiCircleGauge
+                value={stats.conversionStats.registeredAfterTourPercent}
+                label="Children Registered After Tour Completion"
+                direction="good-high"
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -337,7 +337,7 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
 
       {/* Bottom Row: Past Due & Completed Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* Past Due */}
         <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -346,7 +346,7 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
-               <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.pastDueChartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} dy={10} />
@@ -357,21 +357,21 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center mt-4 items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
-                <span className="text-xs font-medium">{userName || "Franchise"}</span>
+              <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
+              <span className="text-xs font-medium">{userName || "Franchise"}</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Completed */}
         <Card className="border-none shadow-sm">
-           <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-medium">Completed</CardTitle>
             <MoreVertical className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
-               <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.completedChartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} dy={10} />
@@ -382,8 +382,8 @@ export function DashboardStats({ stats, userName, showLtv = false, rangeLabel }:
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center mt-4 items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
-                <span className="text-xs font-medium">{userName || "Franchise"}</span>
+              <div className="h-2 w-2 rounded-full bg-[#a855f7]" />
+              <span className="text-xs font-medium">{userName || "Franchise"}</span>
             </div>
           </CardContent>
         </Card>

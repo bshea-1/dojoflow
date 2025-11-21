@@ -45,7 +45,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
     { href: `/dashboard/${franchiseSlug}/pipeline`, label: "Pipeline", icon: KanbanSquare },
     { href: `/dashboard/${franchiseSlug}/actions`, label: "Actions", icon: CheckSquare },
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
-    { href: `/dashboard/${franchiseSlug}/members`, label: "Members", icon: UserCheck },
+    { href: `/dashboard/${franchiseSlug}/members`, label: "Families", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/automations`, label: "Automations", icon: Zap },
     { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
