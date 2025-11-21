@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { PageTransition } from "@/components/dashboard/page-transition";
+import { ViewModeBanner } from "@/components/dashboard/view-mode-banner";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getPendingTaskCount } from "./actions/actions";
@@ -105,6 +106,7 @@ export default async function DashboardLayout({
             <span className="text-sm text-muted-foreground">{user.email}</span>
           </div>
         </header>
+        <ViewModeBanner userRole={userRole} />
         <main className="p-6">
           <PageTransition>{children}</PageTransition>
         </main>

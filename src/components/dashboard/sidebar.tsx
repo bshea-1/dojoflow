@@ -52,6 +52,8 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
   const handleRoleViewChange = (newRoleView: string) => {
     setRoleView(newRoleView);
     localStorage.setItem("roleView", newRoleView);
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event("roleViewChange"));
   };
 
   const links = [

@@ -81,7 +81,25 @@ export function BookTourDialog({
   const isControlled = typeof open === "boolean" && !!onOpenChange;
   const dialogOpen = isControlled ? Boolean(open) : internalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSenseiView, setIsSenseiView] = useState(false);
   const router = useRouter();
+
+  // Check if in sensei view mode
+  useEffect(() => {
+    const checkRoleView = () => {
+      const roleView = localStorage.getItem("roleView");
+      setIsSenseiView(roleView === "sensei");
+    };
+    
+    checkRoleView();
+    window.addEventListener("storage", checkRoleView);
+    window.addEventListener("roleViewChange", checkRoleView);
+    
+    return () => {
+      window.removeEventListener("storage", checkRoleView);
+      window.removeEventListener("roleViewChange", checkRoleView);
+    };
+  }, []);
 
   const form = useForm<BookTourSchema>({
     resolver: zodResolver(bookTourSchema),
@@ -110,6 +128,12 @@ export function BookTourDialog({
   }, [dialogOpen, form]);
 
   async function onSubmit(data: BookTourSchema) {
+    // Prevent submission if in sensei view
+    if (isSenseiView) {
+      toast.error("Tour booking is not available in view mode");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await bookTour(data, franchiseSlug);
@@ -387,7 +411,7 @@ export function BookTourDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isSenseiView}>
                 {isSubmitting ? "Booking..." : "Confirm Booking"}
               </Button>
             </DialogFooter>

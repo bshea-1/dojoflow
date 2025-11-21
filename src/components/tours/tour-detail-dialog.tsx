@@ -37,6 +37,7 @@ interface TourDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   franchiseSlug: string;
+  readOnly?: boolean;
 }
 
 export function TourDetailDialog({
@@ -44,6 +45,7 @@ export function TourDetailDialog({
   open,
   onOpenChange,
   franchiseSlug,
+  readOnly = false,
 }: TourDetailDialogProps) {
   const router = useRouter();
   const [scheduledInput, setScheduledInput] = useState("");
@@ -164,6 +166,8 @@ export function TourDetailDialog({
                 type="datetime-local"
                 value={scheduledInput}
                 onChange={(event) => setScheduledInput(event.target.value)}
+                disabled={readOnly}
+                className={readOnly ? "bg-muted cursor-not-allowed" : ""}
               />
             </div>
 
@@ -174,8 +178,9 @@ export function TourDetailDialog({
                 onValueChange={(value) =>
                   setStatus(value as TourWithGuardian["status"])
                 }
+                disabled={readOnly}
               >
-                <SelectTrigger>
+                <SelectTrigger className={readOnly ? "bg-muted cursor-not-allowed" : ""}>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -199,7 +204,7 @@ export function TourDetailDialog({
             type="button"
             variant="destructive"
             className="w-full sm:w-auto"
-            disabled={isDeleting || !tour}
+            disabled={isDeleting || !tour || readOnly}
             onClick={handleDelete}
           >
             {isDeleting ? "Removing..." : "Remove Tour"}
@@ -207,7 +212,7 @@ export function TourDetailDialog({
           <Button
             type="button"
             className="w-full sm:w-auto"
-            disabled={isSaving || !tour}
+            disabled={isSaving || !tour || readOnly}
             onClick={handleSave}
           >
             {isSaving ? "Saving..." : "Save Changes"}

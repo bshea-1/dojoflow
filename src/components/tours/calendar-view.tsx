@@ -27,12 +27,14 @@ interface CalendarViewProps {
   tours?: TourWithGuardian[];
   onSlotSelect?: (date: Date) => void;
   onTourClick?: (tour: TourWithGuardian) => void;
+  readOnly?: boolean;
 }
 
-function DraggableTourCard({ tour, onClick }: { tour: TourWithGuardian; onClick?: (tour: TourWithGuardian) => void }) {
+function DraggableTourCard({ tour, onClick, readOnly = false }: { tour: TourWithGuardian; onClick?: (tour: TourWithGuardian) => void; readOnly?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: tour.id,
     data: { tour },
+    disabled: readOnly,
   });
 
   const style = transform ? {
@@ -54,7 +56,10 @@ function DraggableTourCard({ tour, onClick }: { tour: TourWithGuardian; onClick?
   const pathLabel = hasJuniorPath ? "JRs" : "Gamebuilding Session";
 
   const cardClasses = cn(
-    "border rounded p-2 text-[10px] truncate cursor-grab active:cursor-grabbing shadow-sm",
+    "border rounded p-2 text-[10px] truncate shadow-sm",
+    readOnly 
+      ? "cursor-pointer" 
+      : "cursor-grab active:cursor-grabbing",
     hasJuniorPath
       ? "bg-purple-100 text-purple-700 border-purple-400"
       : "bg-primary/10 text-primary border-primary",
@@ -118,6 +123,7 @@ export function CalendarView({
   tours = [],
   onSlotSelect,
   onTourClick,
+  readOnly = false,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const params = useParams();
@@ -151,6 +157,12 @@ export function CalendarView({
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    // Prevent drag-and-drop if in read-only mode
+    if (readOnly) {
+      toast.error("Tour rescheduling is not available in view mode");
+      return;
+    }
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -234,6 +246,7 @@ export function CalendarView({
                               key={tour.id}
                               tour={tour}
                               onClick={onTourClick}
+                              readOnly={readOnly}
                             />
                           ))}
                         </div>

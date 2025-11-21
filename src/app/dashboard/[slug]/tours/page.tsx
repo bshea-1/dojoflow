@@ -14,6 +14,16 @@ export default async function ToursPage({ params }: { params: { slug: string } }
 
   if (!franchise) return <div>Franchise not found</div>;
 
+  // Get user role
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id)
+    .single();
+
+  const userRole = profile?.role || "sensei";
+
   // 2. Fetch Tours (only scheduled tours - filter out completed and no-show)
   const { data: tours } = await supabase
     .from("tours")
@@ -46,8 +56,8 @@ export default async function ToursPage({ params }: { params: { slug: string } }
 
   const leadOptions = leads?.map(l => ({
     id: l.id,
-    label: l.guardians?.[0] 
-      ? `${l.guardians[0].first_name} ${l.guardians[0].last_name}` 
+    label: l.guardians?.[0]
+      ? `${l.guardians[0].first_name} ${l.guardians[0].last_name}`
       : "Unknown Lead"
   })) || [];
 
@@ -56,6 +66,7 @@ export default async function ToursPage({ params }: { params: { slug: string } }
       franchiseSlug={params.slug}
       leads={leadOptions}
       tours={(tours as TourWithGuardian[]) || []}
+      userRole={userRole}
     />
   );
 }
