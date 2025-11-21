@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isPast, isFuture, startOfDay } from "date-fns";
-import { 
-  Calendar, 
-  Clock, 
-  Mail, 
-  MessageSquare, 
-  Phone, 
-  Plus, 
+import {
+  Calendar,
+  Clock,
+  Mail,
+  MessageSquare,
+  Phone,
+  Plus,
   Trash2,
   User,
   Calendar as CalendarIcon
@@ -116,22 +116,22 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
   };
 
   // Group Tasks
-  const overdueTasks = tasks.filter(t => 
-    t.status === "pending" && 
-    t.due_date && 
-    isPast(startOfDay(new Date(t.due_date))) && 
+  const overdueTasks = tasks.filter(t =>
+    t.status === "pending" &&
+    t.due_date &&
+    isPast(startOfDay(new Date(t.due_date))) &&
     !isToday(new Date(t.due_date))
   );
 
-  const todayTasks = tasks.filter(t => 
-    t.status === "pending" && 
+  const todayTasks = tasks.filter(t =>
+    t.status === "pending" &&
     (!t.due_date || isToday(new Date(t.due_date)))
   );
 
-  const futureTasks = tasks.filter(t => 
-    t.status === "pending" && 
-    t.due_date && 
-    isFuture(startOfDay(new Date(t.due_date))) && 
+  const futureTasks = tasks.filter(t =>
+    t.status === "pending" &&
+    t.due_date &&
+    isFuture(startOfDay(new Date(t.due_date))) &&
     !isToday(new Date(t.due_date))
   );
 
@@ -144,8 +144,8 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
     return (
       <div className="space-y-2">
         {taskList.map((task) => (
-          <div 
-            key={task.id} 
+          <div
+            key={task.id}
             className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group cursor-pointer"
             onClick={() => setSelectedTask(task)}
           >
@@ -202,8 +202,8 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Select 
-                value={newTaskType} 
+              <Select
+                value={newTaskType}
                 onValueChange={(v: any) => setNewTaskType(v)}
               >
                 <SelectTrigger className="w-full sm:w-[140px]">
@@ -218,19 +218,19 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              <Input 
-                placeholder="What needs to be done?" 
+              <Input
+                placeholder="What needs to be done?"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 className="flex-1"
               />
-              <Input 
-                type="date" 
+              <Input
+                type="date"
                 className="w-full sm:w-auto"
                 value={newTaskDate}
                 onChange={(e) => setNewTaskDate(e.target.value)}
               />
-              <Button 
+              <Button
                 onClick={() => createTaskMutation.mutate()}
                 disabled={!newTaskTitle || createTaskMutation.isPending}
               >
@@ -261,8 +261,22 @@ export function ActionList({ franchiseSlug, initialTasks, isReadOnly = false }: 
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="today" className="relative">
+            Today
+            {todayTasks.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+                {todayTasks.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="upcoming" className="relative">
+            Upcoming
+            {futureTasks.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+                {futureTasks.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
 

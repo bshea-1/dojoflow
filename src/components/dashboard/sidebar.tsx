@@ -83,7 +83,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
                 <Icon className="h-4 w-4" />
                 <span className="flex-1">{link.label}</span>
                 {link.label === "Actions" && taskCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-500 text-[10px] font-bold text-white">
                     {taskCount}
                   </span>
                 )}
