@@ -9,13 +9,13 @@ import {
   KanbanSquare,
   Calendar,
   Users,
-  Settings,
   Menu,
   LogOut,
   UserCheck,
   CheckSquare,
   MapPin,
-  Zap
+  Zap,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/actions/auth";
@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 
 interface SidebarProps {
   franchiseSlug: string;
@@ -39,6 +40,19 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
   const pathname = usePathname();
   const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const [roleView, setRoleView] = useState<string>("");
+
+  // Load role view from localStorage on mount
+  useEffect(() => {
+    const savedRoleView = localStorage.getItem("roleView");
+    setRoleView(savedRoleView || userRole || "sensei");
+  }, [userRole]);
+
+  // Save role view to localStorage when it changes
+  const handleRoleViewChange = (newRoleView: string) => {
+    setRoleView(newRoleView);
+    localStorage.setItem("roleView", newRoleView);
+  };
 
   const links = [
     { href: `/dashboard/${franchiseSlug}`, label: "Overview", icon: LayoutDashboard },
@@ -47,11 +61,30 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
     { href: `/dashboard/${franchiseSlug}/tours`, label: "Tours", icon: Calendar },
     { href: `/dashboard/${franchiseSlug}/members`, label: "Families", icon: UserCheck },
     { href: `/dashboard/${franchiseSlug}/automations`, label: "Automations", icon: Zap },
-    { href: `/dashboard/${franchiseSlug}/settings`, label: "Settings", icon: Settings },
   ];
 
   // Find current franchise name
   const currentFranchiseName = assignedFranchises.find(f => f.slug === franchiseSlug)?.name || "Select Location";
+
+  // Get available role views based on actual user role
+  const getAvailableRoleViews = () => {
+    if (userRole === "franchisee") {
+      return [
+        { value: "franchisee", label: "Franchise Owner" },
+        { value: "center_director", label: "Center Director" },
+        { value: "sensei", label: "Sensei" },
+      ];
+    } else if (userRole === "center_director") {
+      return [
+        { value: "center_director", label: "Center Director" },
+        { value: "sensei", label: "Sensei" },
+      ];
+    }
+    return [{ value: "sensei", label: "Sensei" }];
+  };
+
+  const availableRoleViews = getAvailableRoleViews();
+  const currentRoleViewLabel = availableRoleViews.find(r => r.value === roleView)?.label || "Sensei";
 
   return (
     <>
@@ -93,18 +126,43 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], task
         </nav>
 
         <div className="p-4 border-t space-y-2">
-          {/* Role Display */}
-          {userRole && (
+          {/* Role View Switcher */}
+          {availableRoleViews.length > 1 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between gap-3 text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4" />
+                    <span>{currentRoleViewLabel}</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="start">
+                <DropdownMenuLabel>Switch View</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableRoleViews.map((role) => (
+                  <DropdownMenuItem
+                    key={role.value}
+                    onClick={() => handleRoleViewChange(role.value)}
+                    className={cn(role.value === roleView && "bg-accent")}
+                  >
+                    {role.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Single Role Display (no switching) */}
+          {availableRoleViews.length === 1 && (
             <div className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              <span>
-                {userRole === "franchisee" && "Franchise Owner"}
-                {userRole === "center_director" && "Center Director"}
-                {userRole === "sensei" && "Sensei"}
-              </span>
+              <span>{currentRoleViewLabel}</span>
             </div>
           )}
 
+          {/* Location Switcher */}
           {userRole === "franchisee" && assignedFranchises.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
