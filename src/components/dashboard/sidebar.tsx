@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/store/ui-store";
-import { 
-  LayoutDashboard, 
-  KanbanSquare, 
-  Calendar, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  KanbanSquare,
+  Calendar,
+  Users,
+  Settings,
   Menu,
   LogOut,
   UserCheck,
@@ -32,9 +32,10 @@ interface SidebarProps {
   franchiseSlug: string;
   userRole?: string;
   assignedFranchises?: { name: string; slug: string }[];
+  taskCount?: number;
 }
 
-export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: SidebarProps) {
+export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [], taskCount = 0 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useUIStore();
@@ -63,7 +64,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
         <div className="flex h-16 items-center justify-between px-6 border-b">
           <span className="text-lg font-bold">DojoFlow</span>
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
-             <Menu className="h-4 w-4" />
+            <Menu className="h-4 w-4" />
           </Button>
         </div>
         <nav className="flex-1 flex flex-col gap-2 p-4">
@@ -80,12 +81,17 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {link.label}
+                <span className="flex-1">{link.label}</span>
+                {link.label === "Actions" && taskCount > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                    {taskCount}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
-        
+
         <div className="p-4 border-t space-y-2">
           {userRole === "franchisee" && assignedFranchises.length > 0 && (
             <DropdownMenu>
@@ -99,7 +105,7 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
                 <DropdownMenuLabel>Switch Location</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {assignedFranchises.map((franchise) => (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     key={franchise.slug}
                     onClick={() => router.push(`/dashboard/${franchise.slug}`)}
                     className={cn(franchise.slug === franchiseSlug && "bg-accent")}
@@ -119,10 +125,10 @@ export function Sidebar({ franchiseSlug, userRole, assignedFranchises = [] }: Si
           </form>
         </div>
       </div>
-      
+
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={toggleSidebar}
         />

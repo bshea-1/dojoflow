@@ -42,6 +42,32 @@ export async function getTasks(franchiseSlug: string) {
   return tasks;
 }
 
+export async function getPendingTaskCount(franchiseSlug: string) {
+  const supabase = createClient();
+
+  // Get franchise ID
+  const { data: franchise } = await supabase
+    .from("franchises")
+    .select("id")
+    .eq("slug", franchiseSlug)
+    .single();
+
+  if (!franchise) return 0;
+
+  const { count, error } = await supabase
+    .from("tasks")
+    .select("*", { count: "exact", head: true })
+    .eq("franchise_id", franchise.id)
+    .eq("status", "pending");
+
+  if (error) {
+    console.error("Error fetching task count:", error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
 export async function createTask(data: TaskSchema, franchiseSlug: string) {
   const supabase = createClient();
 

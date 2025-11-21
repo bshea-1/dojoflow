@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { PageTransition } from "@/components/dashboard/page-transition";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getPendingTaskCount } from "./actions/actions";
 
 export default async function DashboardLayout({
   children,
@@ -11,7 +12,7 @@ export default async function DashboardLayout({
   params: { slug: string };
 }) {
   const supabase = createClient();
-  
+
   // Verify access to this franchise
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -85,20 +86,23 @@ export default async function DashboardLayout({
       assignedFranchises = [currentFranchise];
     }
   }
-  
+
+  const taskCount = await getPendingTaskCount(params.slug);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar 
-        franchiseSlug={params.slug} 
+      <Sidebar
+        franchiseSlug={params.slug}
         userRole={userRole}
         assignedFranchises={assignedFranchises}
+        taskCount={taskCount}
       />
-      
+
       <div className="md:pl-64 transition-all duration-200">
         <header className="flex h-16 items-center gap-4 border-b bg-background px-6">
           {/* Top bar content (User Profile, etc.) */}
           <div className="ml-auto flex items-center gap-4">
-             <span className="text-sm text-muted-foreground">{user.email}</span>
+            <span className="text-sm text-muted-foreground">{user.email}</span>
           </div>
         </header>
         <main className="p-6">
