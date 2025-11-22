@@ -1,5 +1,4 @@
 
-
 import { Resend } from "resend";
 
 interface EmailRecipient {
@@ -15,20 +14,8 @@ interface SendEmailParams {
     replyTo?: string;
 }
 
-/**
- * Initialize Resend client
- */
-function getResendClient() {
-    const apiKey = process.env.RESEND_API_KEY;
-
-    if (!apiKey) {
-        throw new Error(
-            "Missing Resend API key. Please configure RESEND_API_KEY in your environment variables."
-        );
-    }
-
-    return new Resend(apiKey);
-}
+// Initialize Resend client once
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Send email using Resend
@@ -38,11 +25,8 @@ export async function sendEmailViaResend({
     subject,
     htmlBody,
     from,
-    replyTo,
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
-        const resend = getResendClient();
-
         // Use onboarding@resend.dev as the sender (verified domain)
         const fromEmail = from || "onboarding@resend.dev";
 
@@ -63,11 +47,11 @@ export async function sendEmailViaResend({
         });
 
         if (error) {
-            console.error("Resend API error:", JSON.stringify(error, null, 2));
+            console.error("Resend API error:", error);
             return { success: false, error: error.message };
         }
 
-        console.log("Email sent successfully:", JSON.stringify(data, null, 2));
+        console.log("Email sent successfully:", data);
         return { success: true };
     } catch (error) {
         console.error("Failed to send email via Resend:", error);
@@ -106,7 +90,7 @@ export function isValidEmail(email: string): boolean {
  * Send batch emails
  */
 export async function sendBatchEmails(emails: SendEmailParams[]) {
-    const resend = getResendClient();
+    
     try {
         const batchPayload = emails.map(email => ({
             from: email.from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -134,7 +118,7 @@ export async function sendBatchEmails(emails: SendEmailParams[]) {
  * Retrieve an email
  */
 export async function getEmail(emailId: string) {
-    const resend = getResendClient();
+    
     try {
         const { data, error } = await resend.emails.get(emailId);
         if (error) throw new Error(error.message);
@@ -148,7 +132,7 @@ export async function getEmail(emailId: string) {
  * Update an email (scheduled)
  */
 export async function updateEmail(emailId: string, scheduledAt: string) {
-    const resend = getResendClient();
+    
     try {
         const { data, error } = await resend.emails.update({
             id: emailId,
@@ -165,7 +149,7 @@ export async function updateEmail(emailId: string, scheduledAt: string) {
  * Cancel an email
  */
 export async function cancelEmail(emailId: string) {
-    const resend = getResendClient();
+    
     try {
         const { data, error } = await resend.emails.cancel(emailId);
         if (error) throw new Error(error.message);
@@ -179,7 +163,7 @@ export async function cancelEmail(emailId: string) {
  * List emails
  */
 export async function listEmails() {
-    const resend = getResendClient();
+    
     try {
         const { data, error } = await resend.emails.list();
         if (error) throw new Error(error.message);
@@ -193,7 +177,7 @@ export async function listEmails() {
  * List attachments
  */
 export async function listAttachments(emailId: string) {
-    const resend = getResendClient();
+    
     try {
         // @ts-ignore - The types might not be fully up to date in the installed version
         const { data, error } = await resend.emails.attachments.list({ emailId });
@@ -208,7 +192,7 @@ export async function listAttachments(emailId: string) {
  * Retrieve attachment
  */
 export async function getAttachment(emailId: string, attachmentId: string) {
-    const resend = getResendClient();
+    
     try {
         // @ts-ignore
         const { data, error } = await resend.emails.attachments.get({
