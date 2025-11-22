@@ -14,8 +14,18 @@ interface SendEmailParams {
     replyTo?: string;
 }
 
-// Initialize Resend client once
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-load Resend client to ensure env vars are available
+let resendClient: Resend | null = null;
+
+function getResend() {
+    if (!resendClient) {
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error("RESEND_API_KEY is not configured");
+        }
+        resendClient = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resendClient;
+}
 
 /**
  * Send email using Resend
@@ -39,7 +49,7 @@ export async function sendEmailViaResend({
             subject,
         });
 
-        const { data, error } = await resend.emails.send({
+        const { data, error } = await getResend().emails.send({
             from: fromEmail,
             to: recipients,
             subject: subject,
@@ -90,7 +100,7 @@ export function isValidEmail(email: string): boolean {
  * Send batch emails
  */
 export async function sendBatchEmails(emails: SendEmailParams[]) {
-    
+
     try {
         const batchPayload = emails.map(email => ({
             from: email.from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -100,7 +110,7 @@ export async function sendBatchEmails(emails: SendEmailParams[]) {
             reply_to: email.replyTo,
         }));
 
-        const { data, error } = await resend.batch.send(batchPayload);
+        const { data, error } = await getResend().batch.send(batchPayload);
 
         if (error) {
             console.error("Resend Batch API error:", error);
@@ -118,9 +128,9 @@ export async function sendBatchEmails(emails: SendEmailParams[]) {
  * Retrieve an email
  */
 export async function getEmail(emailId: string) {
-    
+
     try {
-        const { data, error } = await resend.emails.get(emailId);
+        const { data, error } = await getResend().emails.get(emailId);
         if (error) throw new Error(error.message);
         return { success: true, data };
     } catch (error) {
@@ -132,9 +142,9 @@ export async function getEmail(emailId: string) {
  * Update an email (scheduled)
  */
 export async function updateEmail(emailId: string, scheduledAt: string) {
-    
+
     try {
-        const { data, error } = await resend.emails.update({
+        const { data, error } = await getResend().emails.update({
             id: emailId,
             scheduledAt,
         });
@@ -149,9 +159,9 @@ export async function updateEmail(emailId: string, scheduledAt: string) {
  * Cancel an email
  */
 export async function cancelEmail(emailId: string) {
-    
+
     try {
-        const { data, error } = await resend.emails.cancel(emailId);
+        const { data, error } = await getResend().emails.cancel(emailId);
         if (error) throw new Error(error.message);
         return { success: true, data };
     } catch (error) {
@@ -163,9 +173,9 @@ export async function cancelEmail(emailId: string) {
  * List emails
  */
 export async function listEmails() {
-    
+
     try {
-        const { data, error } = await resend.emails.list();
+        const { data, error } = await getResend().emails.list();
         if (error) throw new Error(error.message);
         return { success: true, data };
     } catch (error) {
@@ -177,10 +187,10 @@ export async function listEmails() {
  * List attachments
  */
 export async function listAttachments(emailId: string) {
-    
+
     try {
         // @ts-ignore - The types might not be fully up to date in the installed version
-        const { data, error } = await resend.emails.attachments.list({ emailId });
+        const { data, error } = await getResend().emails.attachments.list({ emailId });
         if (error) throw new Error(error.message);
         return { success: true, data };
     } catch (error) {
@@ -192,10 +202,10 @@ export async function listAttachments(emailId: string) {
  * Retrieve attachment
  */
 export async function getAttachment(emailId: string, attachmentId: string) {
-    
+
     try {
         // @ts-ignore
-        const { data, error } = await resend.emails.attachments.get({
+        const { data, error } = await getResend().emails.attachments.get({
             id: attachmentId,
             emailId,
         });
