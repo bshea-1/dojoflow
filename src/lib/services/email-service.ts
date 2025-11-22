@@ -42,81 +42,33 @@ export async function sendEmailViaResend({
 }: SendEmailParams): Promise<{ success: boolean; error?: string }> {
     try {
         const resend = getResendClient();
-        // Use the provided from email or default to the one in env
-        // Note: For Resend free tier/testing, you must use 'onboarding@resend.dev' unless you verify a domain
-        const fromEmail = from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-        // Resend accepts an array of strings for 'to'
+        // Use onboarding@resend.dev as the sender (verified domain)
+        const fromEmail = from || "onboarding@resend.dev";
+
+        // Convert recipients to array of email strings
         const recipients = to.map((r) => r.email);
 
-        // Try sending from the requested address first (e.g. codenfl@outlook.com)
-        // This will likely fail if the domain is not verified, but we attempt it as requested.
-        const preferredFrom = from || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-        const fallbackFrom = "onboarding@resend.dev";
+        console.log("Sending email via Resend:", {
+            from: fromEmail,
+            to: recipients,
+            subject,
+        });
 
-        console.log(`Attempting to send email from: ${preferredFrom}`);
+        const { data, error } = await resend.emails.send({
+            from: fromEmail,
+            to: recipients,
+            subject: subject,
+            html: htmlBody,
+        });
 
-        try {
-            const { data, error } = await resend.emails.send({
-                from: preferredFrom,
-                to: recipients,
-                subject: subject,
-                html: htmlBody,
-                replyTo: replyTo,
-            });
-
-            if (error) {
-                // If the error is about the "from" address, try the fallback
-                if (preferredFrom !== fallbackFrom && (error.message.includes("allowed") || error.message.includes("verify") || error.message.includes("domain"))) {
-                    console.warn(`Failed to send from ${preferredFrom}. Retrying with fallback: ${fallbackFrom}`);
-
-                    const { data: fallbackData, error: fallbackError } = await resend.emails.send({
-                        from: fallbackFrom,
-                        to: recipients,
-                        subject: subject,
-                        html: htmlBody,
-                        replyTo: replyTo || preferredFrom, // Set Reply-To to the original sender if not set
-                    });
-
-                    if (fallbackError) {
-                        console.error("Fallback email sending failed:", JSON.stringify(fallbackError, null, 2));
-                        return { success: false, error: fallbackError.message };
-                    }
-
-                    console.log("Email sent successfully via fallback sender:", JSON.stringify(fallbackData, null, 2));
-                    return { success: true };
-                }
-
-                console.error("Resend API error:", JSON.stringify(error, null, 2));
-                return { success: false, error: error.message };
-            }
-
-            console.log("Resend API success:", JSON.stringify(data, null, 2));
-            return { success: true };
-        } catch (err) {
-            // Catch unexpected errors and try fallback
-            console.error("Unexpected error sending email:", err);
-            if (preferredFrom !== fallbackFrom) {
-                console.log(`Retrying with fallback: ${fallbackFrom}`);
-                try {
-                    const { data: fallbackData, error: fallbackError } = await resend.emails.send({
-                        from: fallbackFrom,
-                        to: recipients,
-                        subject: subject,
-                        html: htmlBody,
-                        replyTo: replyTo || preferredFrom,
-                    });
-
-                    if (fallbackError) {
-                        return { success: false, error: fallbackError.message };
-                    }
-                    return { success: true };
-                } catch (fallbackErr) {
-                    return { success: false, error: "Fallback failed" };
-                }
-            }
-            return { success: false, error: "Failed to send email" };
+        if (error) {
+            console.error("Resend API error:", JSON.stringify(error, null, 2));
+            return { success: false, error: error.message };
         }
+
+        console.log("Email sent successfully:", JSON.stringify(data, null, 2));
+        return { success: true };
     } catch (error) {
         console.error("Failed to send email via Resend:", error);
 
